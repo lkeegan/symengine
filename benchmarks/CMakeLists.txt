@@ -20,9 +20,6 @@ target_link_libraries(expand2b symengine)
 add_executable(expand3 expand3.cpp)
 target_link_libraries(expand3 symengine)
 
-add_executable(add1 add1.cpp)
-target_link_libraries(add1 symengine)
-
 add_executable(matrix_add1 matrix_add1.cpp)
 target_link_libraries(matrix_add1 symengine)
 
@@ -74,6 +71,9 @@ endif()
 
 if (BUILD_BENCHMARKS_GOOGLE)
     find_package(benchmark REQUIRED)
+
+    add_executable(add1 add1.cpp)
+    target_link_libraries(add1 symengine benchmark::benchmark)
 
     add_executable(bench bench.cpp)
     target_link_libraries(bench symengine benchmark::benchmark)

@@ -1,5 +1,4 @@
-#include <iostream>
-#include <chrono>
+#include <benchmark/benchmark.h>
 
 #include <symengine/basic.h>
 #include <symengine/add.h>
@@ -20,29 +19,21 @@ using SymEngine::multinomial_coefficients;
 using SymEngine::RCP;
 using SymEngine::rcp_dynamic_cast;
 
-int main(int argc, char *argv[])
-{
-    SymEngine::print_stack_on_segfault();
-
+void add1(benchmark::State &state){
     RCP<const Basic> x = symbol("x");
     RCP<const Basic> a, c;
-    int N;
-
-    N = 3000;
-    a = x;
-    c = integer(1);
-    auto t1 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < N; i++) {
-        a = add(a, mul(c, pow(x, integer(i))));
-        c = mul(c, integer(-1));
+    for (auto _ : state) {
+        a = x;
+        c = integer(1);
+        for (int i = 0; i < state.range(0); i++) {
+            a = add(a, mul(c, pow(x, integer(i))));
+            c = mul(c, integer(-1));
+        }
     }
-    auto t2 = std::chrono::high_resolution_clock::now();
-    // std::cout << *a << std::endl;
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1)
-                     .count()
-              << "ms" << std::endl;
-    std::cout << "number of terms: "
-              << rcp_dynamic_cast<const Add>(a)->get_dict().size() << std::endl;
-
-    return 0;
+    state.SetComplexityN(state.range(0));
+    state.SetLabel("number of terms: " + std::to_string(rcp_dynamic_cast<const Add>(a)->get_dict().size()));
 }
+
+BENCHMARK(add1)->RangeMultiplier(2)->Range(4, 4096)->Complexity();
+
+BENCHMARK_MAIN();
