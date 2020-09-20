@@ -53,9 +53,6 @@ target_link_libraries(series symengine)
 add_executable(symengine_bench symengine_bench.cpp)
 target_link_libraries(symengine_bench symengine)
 
-add_executable(ntheorybench ntheorybench.cpp)
-target_link_libraries(ntheorybench symengine)
-
 if (WITH_FLINT)
     add_executable(series_expansion_sincos_flint series_expansion_sincos_flint.cpp)
     target_link_libraries(series_expansion_sincos_flint symengine)
@@ -80,6 +77,9 @@ if (BUILD_BENCHMARKS_GOOGLE)
 
     add_executable(bench_eval_double bench_eval_double.cpp)
     target_link_libraries(bench_eval_double symengine benchmark::benchmark)
+
+    add_executable(ntheorybench ntheorybench.cpp)
+    target_link_libraries(ntheorybench symengine benchmark::benchmark)
 
     add_executable(visitor_call visitor_call.cpp)
     target_link_libraries(visitor_call symengine benchmark::benchmark)
