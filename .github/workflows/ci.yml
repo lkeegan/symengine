@@ -143,7 +143,7 @@ jobs:
             OS: ubuntu-20.04
 
           - BUILD_TYPE: Debug
-            WITH_LLVM: 3.8
+            WITH_LLVM: 5.0
             OS: macos-latest
             CC: clang
 
