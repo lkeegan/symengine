@@ -125,6 +125,10 @@ if [[ "${WITH_LLVM}" == "7.0" ]]; then
     export CXX=clang++-7
 elif [[ "${WITH_LLVM}" == "8.0" ]]; then
     export LLVM_DIR=/usr/lib/llvm-8/share/llvm/
+elif [[ "${WITH_LLVM}" == "11" ]]; then
+    export CC=clang-11
+    export CXX=clang++-11
+    export LLVM_DIR=/usr/lib/llvm-11/share/llvm/
 elif [[ "${WITH_LLVM}" == "6.0" ]]; then
     export LLVM_DIR=/usr/lib/llvm-6.0/share/llvm/
 elif [[ ! -z "${WITH_LLVM}" ]]; then

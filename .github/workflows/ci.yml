@@ -192,6 +192,14 @@ jobs:
           - CONDA_ENV_FILE: symengine/utilities/matchpycpp/environment.yml
             CC: gcc
             OS: ubuntu-16.04
+
+          - BUILD_TYPE: Release
+            WITH_LLVM: 11
+            CC: clang
+            OS: ubuntu-16.04
+            EXTRA_APT_REPOSITORY: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-11 main'
+            EXTRA_APT_PACKAGES: "clang-11 llvm-11-dev"
+            CXXFLAGS: "-std=c++20"
     
     steps:
     - name: Checkout code
@@ -234,3 +242,4 @@ jobs:
         WITH_MPC: ${{ matrix.WITH_MPC }}
         MAKEFLAGS: ${{ matrix.MAKEFLAGS }}
         BUILD_SHARED_LIBS: ${{ matrix.BUILD_SHARED_LIBS }}
+        CXXFLAGS: ${{ matrix.CXXFLAGS }}
