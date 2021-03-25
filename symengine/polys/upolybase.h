@@ -596,12 +596,12 @@ public:
     {
     }
 
-    bool operator==(const ContainerBaseIter &rhs)
+    bool operator==(const ContainerBaseIter &rhs) const
     {
         return (ptr_ == rhs.ptr_) and (i_ == rhs.i_);
     }
 
-    bool operator!=(const ContainerBaseIter &rhs)
+    bool operator!=(const ContainerBaseIter &rhs) const
     {
         return not(*this == rhs);
     }
