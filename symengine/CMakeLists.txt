@@ -213,13 +213,6 @@ include_directories(BEFORE ${symengine_SOURCE_DIR})
 
 add_library(symengine ${SRC})
 
-
-if (WITH_COTIRE)
-    # throws if CMAKE_VERSION < 2.8.12
-    include(cotire)
-    cotire(symengine)
-endif()
-
 include(GenerateExportHeader)
 generate_export_header(symengine)
 set_target_properties(symengine PROPERTIES COMPILE_DEFINITIONS "symengine_EXPORTS")
@@ -293,4 +286,10 @@ if (BUILD_TESTS)
     add_subdirectory(tests)
     add_subdirectory(utilities/matchpycpp/tests)
     add_subdirectory(utilities/matchpycpp/autogen_tests)
+endif()
+
+if (WITH_COTIRE)
+    # throws if CMAKE_VERSION < 2.8.12
+    include(cotire)
+    cotire(symengine)
 endif()

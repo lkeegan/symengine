@@ -121,9 +121,9 @@ jobs:
             WITH_BENCHMARKS_GOOGLE: yes
             CC: clang
             WITH_LLVM: 12
-            OS: ubuntu-18.04
-            EXTRA_APT_REPOSITORY: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-12 main'
-            EXTRA_APT_PACKAGES: "clang-12 llvm-12-dev libstdc++-4.8-dev libgmp-dev libbenchmark-dev"
+            OS: ubuntu-16.04
+            EXTRA_APT_REPOSITORY: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-12 main'
+            EXTRA_APT_PACKAGES: "clang-12 llvm-12-dev libstdc++-4.8-dev libgmp-dev"
 
           - BUILD_TYPE: Debug
             WITH_LLVM: 3.8
