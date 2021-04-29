@@ -57,6 +57,9 @@ set(SRC
     parser/parser.tab.cc
     parser/parser.cpp
     parser/tokenizer.cpp
+    parser/sbml/sbml_parser.tab.cc
+    parser/sbml/sbml_parser.cpp
+    parser/sbml/sbml_tokenizer.cpp
     polys/basic_conversions.cpp
     polys/msymenginepoly.cpp
     polys/uexprpoly.cpp
@@ -65,6 +68,7 @@ set(SRC
     pow.cpp
     printers/codegen.cpp
     printers/mathml.cpp
+    printers/sbml.cpp
     printers/strprinter.cpp
     printers/latex.cpp
     rational.cpp
@@ -159,6 +163,8 @@ set(HEADERS
     parser/parser.h
     parser/parser_stype.h
     parser/tokenizer.h
+    parser/sbml/sbml_parser.h
+    parser/sbml/sbml_tokenizer.h
     polys/basic_conversions.h
     polys/cancel.h
     polys/uexprpoly.h
@@ -172,6 +178,7 @@ set(HEADERS
     pow.h
     printers/codegen.h
     printers/mathml.h
+    printers/sbml.h
     printers/strprinter.h
     printers/latex.h
     printers.h
