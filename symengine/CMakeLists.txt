@@ -64,6 +64,7 @@ set(SRC
     ntheory_funcs.cpp
     number.cpp
     numer_denom.cpp
+    parser/mathml_parser.cpp
     parser/parser_old.cpp
     parser/parser.tab.cc
     parser/parser.cpp
@@ -176,6 +177,7 @@ set(HEADERS
     ntheory_funcs.h
     number.h
     parser.h
+    parser/mathml_parser.h
     parser/parser.h
     parser/tokenizer.h
     parser/sbml/sbml_parser.h
