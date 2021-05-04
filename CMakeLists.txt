@@ -263,9 +263,6 @@ if (WITH_VIRTUAL_TYPEID)
 endif()
 
 # Parser
-find_package(TinyXML REQUIRED)
-target_link_libraries(symengine )
-
 set(WITH_GENERATE_PARSER no CACHE BOOL "Generate parser files")
 if (WITH_GENERATE_PARSER)
     find_program(BISON_EXECUTABLE bison)
