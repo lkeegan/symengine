@@ -215,6 +215,8 @@ include_directories(BEFORE ${symengine_SOURCE_DIR})
 
 add_library(symengine ${SRC})
 
+find_package(TinyXML2 REQUIRED)
+target_link_libraries(symengine tinyxml2::tinyxml2)
 
 if (WITH_COTIRE)
     # throws if CMAKE_VERSION < 2.8.12
