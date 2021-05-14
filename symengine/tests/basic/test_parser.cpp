@@ -328,6 +328,21 @@ TEST_CASE("Parsing: functions", "[parser]")
     REQUIRE(eq(*res, *asin(sin(x))));
     REQUIRE(eq(*res, *parse(res->__str__())));
 
+    s = "floor(5.2)";
+    res = parse(s);
+    REQUIRE(eq(*res, *integer(5)));
+    REQUIRE(eq(*res, *parse(res->__str__())));
+
+    s = "ceiling(5.2)";
+    res = parse(s);
+    REQUIRE(eq(*res, *integer(6)));
+    REQUIRE(eq(*res, *parse(res->__str__())));
+
+    s = "floor(x) + ceiling(y)";
+    res = parse(s);
+    REQUIRE(eq(*res, *add(floor(x), ceiling(y))));
+    REQUIRE(eq(*res, *parse(res->__str__())));
+
     s = "beta(x, y)";
     res = parse(s);
     REQUIRE(eq(*res, *beta(x, y)));
@@ -742,6 +757,10 @@ TEST_CASE("Parsing: function_symbols", "[parser]")
     s = "primepi(23)";
     res = parse(s);
     REQUIRE(eq(*res, *integer(9)));
+
+    s = "primorial(15.9)";
+    res = parse(s);
+    REQUIRE(eq(*res, *integer(30030)));
 }
 
 TEST_CASE("Parsing: multi-arg functions", "[parser]")
