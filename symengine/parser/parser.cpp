@@ -93,10 +93,13 @@ RCP<const Basic> Parser::functionify(const std::string &name, vec_basic &params)
             {"loggamma", loggamma},
             {"lambertw", lambertw},
             {"dirichlet_eta", dirichlet_eta},
+            {"floor", floor},
+            {"ceiling", ceiling},
             {"ln", single_casted_log},
             {"log", single_casted_log},
             {"zeta", single_casted_zeta},
             {"primepi", primepi},
+            {"primorial", primorial},
         };
     const static std::map<
         const std::string,
