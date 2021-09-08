@@ -63,7 +63,6 @@ using SymEngine::RealDouble;
 using SymEngine::Symbol;
 using SymEngine::symbol;
 using SymEngine::UIntPoly;
-using SymEngine::YYSTYPE;
 using SymEngine::zero;
 
 using namespace SymEngine::literals;

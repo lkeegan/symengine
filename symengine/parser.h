@@ -15,6 +15,7 @@ RCP<const Basic>
 parse_sbml(const std::string &s,
            const std::map<const std::string, const RCP<const Basic>> &constants
            = {});
+RCP<const Basic> parse_mathml(const std::string &xml);
 } // namespace SymEngine
 
 #endif
