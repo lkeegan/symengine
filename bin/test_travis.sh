@@ -181,6 +181,9 @@ if [[ "${TEST_CPP}" == "no" ]]; then
 fi
 
 echo "=== Running tests in build directory:"
+
+./symengine/tests/eval/test_lambda_double -s
+
 # C++
 ctest --output-on-failure
 

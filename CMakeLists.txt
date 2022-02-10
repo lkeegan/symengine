@@ -432,7 +432,6 @@ if (WITH_LLVM)
     include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
     set(HAVE_SYMENGINE_LLVM yes)
     set(PKGS ${PKGS} "LLVM")
-    message("LLVM VERSION: ${LLVM_VERSION}")
 endif()
 
 # BENCHMARKS
@@ -754,6 +753,7 @@ endif()
 message("WITH_LLVM: ${WITH_LLVM}")
 if (WITH_LLVM)
     message("LLVM_INCLUDE_DIRS: ${LLVM_INCLUDE_DIRS}")
+    message("LLVM VERSION: ${LLVM_VERSION}")
 endif()
 
 message("WITH_BOOST: ${WITH_BOOST}")
