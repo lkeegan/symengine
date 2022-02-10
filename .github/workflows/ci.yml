@@ -13,17 +13,20 @@ jobs:
             ARCH: x86_64
             OS: windows-2019
             BUILD_TYPE: Release
+            WITH_LLVM: yes
 
           - MSYSTEM: MINGW64
             ARCH: x86_64
             OS: windows-2019
             BUILD_TYPE: Debug
+            WITH_LLVM: yes
 
           - MSYSTEM: MINGW32
             ARCH: i686
             OS: windows-2019
             BUILD_TYPE: Release
             WITH_MPFR: yes
+            WITH_LLVM: yes
 
           - MSYSTEM: MINGW32
             ARCH: i686
@@ -31,6 +34,7 @@ jobs:
             BUILD_TYPE: Debug
             WITH_MPFR: yes
             WITH_MPC: yes
+            WITH_LLVM: yes
     env:
       USE_GLIBCXX_DEBUG: ${{ matrix.USE_GLIBCXX_DEBUG }}
       WITH_MPFR: ${{ matrix.WITH_MPFR }}
@@ -62,7 +66,7 @@ jobs:
       WITH_MPC: ${{ matrix.WITH_MPC }}
       BUILD_SHARED_LIBS: ${{ matrix.BUILD_SHARED_LIBS }}
       OPTIONS: ${{ matrix.BUILD_TYPE }}-${{ matrix.OS }}-${{ matrix.CC }}-${{ matrix.USE_GLIBCXX_DEBUG }}-${{ matrix.WITH_MPFR }}-${{ matrix.WITH_LLVM }}-${{ matrix.WITH_BENCHMARKS }}-${{ matrix.WITH_BENCHMARKS_GOOGLE }}-${{ matrix.WITH_SYMENGINE_RCP }}-${{ matrix.TEST_IN_TREE }}-${{ matrix.WITH_SYMENGINE_THREAD_SAFE }}-${{ matrix.WITH_PRIMESIEVE }}-${{ matrix.INTEGER_CLASS }}-${{ matrix.WITH_ARB }}-${{ matrix.WITH_PIRANHA }}-${{ matrix.CONDA_ENV_FILE }}-${{ matrix.WITH_BFD }}-${{ matrix.WITH_FLINT }}-${{ matrix.TEST_CLANG_FORMAT }}-${{ matrix.WITH_ECM }}-${{ matrix.WITH_LATEST_GCC }}-${{ matrix.WITH_FLINT_DEV }}-${{ matrix.WITH_COTIRE }}-${{ matrix.WITH_COVERAGE }}-${{ matrix.WITH_SANITIZE }}-${{ matrix.WITH_MPC }}-${{ matrix.BUILD_SHARED_LIBS }}
-      CCACHE_DIR: 'D:\a\_temp\msys\msys64\home\runneradmin\.ccache'
+      CCACHE_DIR: 'D:\a\_temp\msys64\home\runneradmin\ccache'
 
     steps:
     - name: Setup msys2
