@@ -248,7 +248,7 @@ jobs:
       with:
         msystem: ${{ matrix.MSYSTEM }}
         update: true
-        install: mingw-w64-${{ matrix.ARCH }}-gcc mingw-w64-${{ matrix.ARCH }}-cmake mingw-w64-${{ matrix.ARCH }}-ccache python make git
+        install: mingw-w64-${{ matrix.ARCH }}-gcc mingw-w64-${{ matrix.ARCH }}-cmake mingw-w64-${{ matrix.ARCH }}-ccache mingw-w64-${{ matrix.ARCH }}-llvm python make git
 
     - name: Set ccache dir
       if: matrix.MSYSTEM == ''

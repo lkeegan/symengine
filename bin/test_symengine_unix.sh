@@ -27,6 +27,7 @@ elif [[ "$MSYSTEM" != "" ]]; then
   export CXX="ccache g++"
   export CC="ccache gcc"
   export CCACHE_DIR=$HOME/.ccache
+  export WITH_LLVM
   ccache -M 100M
   ccache --version
   ccache --zero-stats
