@@ -482,6 +482,25 @@ TEST_CASE("LLVMDoubleVisitor Exceptions", "[llvm_double]")
     CHECK_THROWS_WITH(v.init({x}, *r), "Symbol y not in the symbols vector.");
 }
 
+struct S {
+    LLVMDoubleVisitor v;
+};
+
+TEST_CASE("LLVMDoubleVisitor assignment constructor after init",
+          "[llvm_double]")
+{
+    RCP<const Basic> x, y, r;
+    x = symbol("x");
+    y = symbol("y");
+    r = add(x, pow(x, y));
+    S s1;
+    LLVMDoubleVisitor v1;
+    v1.init({x, y}, *r);
+    LLVMDoubleVisitor v2;
+    // with shared_ptr this line compiles and then segfaults:
+    //    v1 = v2;
+}
+
 TEST_CASE("Check that our default LLVM passes give correct results",
           "[llvm_double]")
 {
