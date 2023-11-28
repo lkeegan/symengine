@@ -287,6 +287,20 @@ TEST_CASE("Evaluate functions", "[lambda_gamma]")
 }
 
 #ifdef HAVE_SYMENGINE_LLVM
+
+TEST_CASE("LLVMDoubleVisitor assignment constructor after init",
+          "[llvm_double]")
+{
+    RCP<const Basic> x, y, r;
+    x = symbol("x");
+    y = symbol("y");
+    r = add(x, pow(x, y));
+    LLVMDoubleVisitor v1;
+    v1.init({x, y}, *r);
+    LLVMDoubleVisitor v2;
+    v1 = v2;
+}
+
 TEST_CASE("Check llvm and lambda are equal", "[llvm_double]")
 {
 
