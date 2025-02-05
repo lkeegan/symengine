@@ -230,14 +230,25 @@ jobs:
           #   WITH_MPFR: yes
           #   WITH_MPC: yes
 
-          # aarch64 linux release build
+          # arm64 macos builds
+          - BUILD_TYPE: Debug
+            OS: macos-14
+
+          - BUILD_TYPE: Release
+            OS: macos-14
+            WITH_LLVM: 18
+
+          # arm64 linux builds
+          - BUILD_TYPE: Debug
+            OS: ubuntu-24.04-arm
+
           - BUILD_TYPE: Release
             OS: ubuntu-24.04-arm
-            CC: clang-18
-            CXX: clang++-18
-            WITH_LLVM: 18
-            EXTRA_APT_REPOSITORY: 'deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main'
-            EXTRA_APT_PACKAGES: clang-18 llvm-18
+            CC: clang-19
+            CXX: clang++-19
+            WITH_LLVM: 19
+            EXTRA_APT_REPOSITORY: 'deb http://apt.llvm.org/noble/ llvm-toolchain-noble-19 main'
+            EXTRA_APT_PACKAGES: clang-19 llvm-19
 
     env:
       USE_GLIBCXX_DEBUG: ${{ matrix.USE_GLIBCXX_DEBUG }}

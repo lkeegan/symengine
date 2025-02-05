@@ -10,14 +10,12 @@ set -x
 # we need to do it ourselves.
 git clean -dfx
 
-if [[ "$(uname)" == "Darwin"  ]]; then
-    export TRAVIS_OS_NAME="osx"
-else
-    export TRAVIS_OS_NAME="linux"
-fi
+# These env vars are set by github actions:
+# RUNNER_OS = {Linux, Windows, macOS}
+# RUNNER_ARCH = {X86, X64, ARM, ARM64}
 
 if [[ "${CC}" == "" ]]; then
-    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
+    if [[ "${RUNNER_OS}" == "macOS" ]]; then
         export CC=clang
         export CXX=clang++
     else
@@ -35,7 +33,7 @@ if [[ "${CXX}" == "" ]]; then
 fi
 export GCOV_EXECUTABLE=gcov
 
-if [[ "${TRAVIS_OS_NAME}" == "linux" ]] && [[ "${CC}" == "gcc" ]]; then
+if [[ "${RUNNER_OS}" == "Linux" ]] && [[ "${CC}" == "gcc" ]]; then
     if [[ "${WITH_LATEST_GCC}" == "yes" ]]; then
         export CC=gcc-12
         export CXX=g++-12
@@ -58,10 +56,18 @@ export our_install_dir="$HOME/our_usr"
 
 if [[ ! -d $HOME/conda_root/pkgs ]]; then
     rm -rf $HOME/conda_root
-    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
-        wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
+    if [[ "${RUNNER_OS}" == "macOS" ]]; then
+        if [[ "${RUNNER_ARCH}" == "ARM64" ]]; then
+            wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-arm64.sh -O miniconda.sh;
+        else
+            wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
+        fi
     else
-        wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+        if [[ "${RUNNER_ARCH}" == "ARM64" ]]; then
+            wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-aarch64.sh -O miniconda.sh;
+        else
+            wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+        fi
     fi
     bash miniconda.sh -b -p $HOME/conda_root
 fi
