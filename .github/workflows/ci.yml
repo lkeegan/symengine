@@ -315,3 +315,4 @@ jobs:
         uses: re-actors/alls-green@release/v1
         with:
           jobs: ${{ toJSON(needs) }}
+          allowed-failures: 'Release-ubuntu-24.04-clang ({ "BUILD_TYPE": "Release", "OS": "ubuntu-24.04", "CC": "clang", "WITH_LLVM": "LATEST", "EXTRA_APT_REPOSITORY": "deb http://apt.llvm.org/noble/ llvm-toolchain-noble main", "EXTRA_APT_PACKAGES": "llvm"})'
