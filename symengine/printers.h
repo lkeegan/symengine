@@ -20,6 +20,8 @@ std::string latex(const DenseMatrix &x, const unsigned max_rows = 20,
                   const unsigned max_cols = 12);
 
 std::string ccode(const Basic &x);
+std::string cudacode(const Basic &x);
+std::string cudacode_float(const Basic &x);
 std::string c89code(const Basic &x);
 std::string c99code(const Basic &x);
 std::string jscode(const Basic &x);
