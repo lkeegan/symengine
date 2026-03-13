@@ -64,6 +64,8 @@ using SymEngine::get_mpq_t;
 using SymEngine::get_mpz_t;
 #endif
 using SymEngine::ccode;
+using SymEngine::cudacode;
+using SymEngine::cudacode_float;
 using SymEngine::diag;
 using SymEngine::eye;
 using SymEngine::jscode;
@@ -683,6 +685,8 @@ IMPLEMENT_STR_CONVERSION(str_julia, julia_str)
 IMPLEMENT_STR_CONVERSION(str_mathml, mathml)
 IMPLEMENT_STR_CONVERSION(str_latex, latex)
 IMPLEMENT_STR_CONVERSION(str_ccode, ccode)
+IMPLEMENT_STR_CONVERSION(str_cudacode, cudacode)
+IMPLEMENT_STR_CONVERSION(str_cudacode_float, cudacode_float)
 IMPLEMENT_STR_CONVERSION(str_jscode, jscode)
 
 void basic_str_free(char *s)

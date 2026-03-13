@@ -59,6 +59,7 @@ using SymEngine::Le;
 using SymEngine::log;
 using SymEngine::loggamma;
 using SymEngine::logical_and;
+using SymEngine::logical_xor;
 using SymEngine::Lt;
 using SymEngine::map_basic_basic;
 using SymEngine::max;
@@ -140,6 +141,59 @@ TEST_CASE("Evaluate to double", "[lambda_double]")
     d = v.call({5.5, 3.3});
     REQUIRE(::fabs(d - 8.8) < 1e-12);
 }
+
+TEST_CASE("Evaluate logical xor to double", "[lambda_double]")
+{
+    auto x = symbol("x");
+    auto y = symbol("y");
+    auto expr = logical_xor({Lt(x, integer(2)), Lt(y, integer(5))});
+
+    LambdaRealDoubleVisitor v;
+    v.init({x, y}, *expr);
+
+    REQUIRE(v.call({1.0, 4.0}) == Approx(0.0));
+    REQUIRE(v.call({1.0, 6.0}) == Approx(1.0));
+    REQUIRE(v.call({3.0, 4.0}) == Approx(1.0));
+    REQUIRE(v.call({3.0, 6.0}) == Approx(0.0));
+}
+
+#ifdef HAVE_SYMENGINE_LLVM
+TEST_CASE("Evaluate logical xor with llvm visitors", "[llvm_double]")
+{
+    auto x = symbol("x");
+    auto y = symbol("y");
+    auto expr = logical_xor({Lt(x, integer(2)), Lt(y, integer(5))});
+
+    LambdaRealDoubleVisitor lambda;
+    lambda.init({x, y}, *expr);
+
+    LLVMDoubleVisitor llvm_double;
+    llvm_double.init({x, y}, *expr);
+
+    LLVMFloatVisitor llvm_float;
+    llvm_float.init({x, y}, *expr);
+
+    struct Case {
+        double x;
+        double y;
+        double expected;
+    };
+
+    const std::array<Case, 4> cases = {
+        {{1.0, 4.0, 0.0}, {1.0, 6.0, 1.0}, {3.0, 4.0, 1.0}, {3.0, 6.0, 0.0}}};
+
+    for (const auto &test_case : cases) {
+        INFO("x=" << test_case.x << ", y=" << test_case.y);
+        REQUIRE(lambda.call({test_case.x, test_case.y})
+                == Approx(test_case.expected));
+        REQUIRE(llvm_double.call({test_case.x, test_case.y})
+                == Approx(test_case.expected));
+        REQUIRE(llvm_float.call({static_cast<float>(test_case.x),
+                                 static_cast<float>(test_case.y)})
+                == Approx(test_case.expected));
+    }
+}
+#endif
 
 TEST_CASE("Evaluate double cse", "[lambda_double_cse]")
 {
