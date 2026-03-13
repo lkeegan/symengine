@@ -387,6 +387,10 @@ char *basic_str_mathml(const basic s);
 char *basic_str_latex(const basic s);
 //! Printing C code
 char *basic_str_ccode(const basic s);
+//! Printing CUDA code
+char *basic_str_cudacode(const basic s);
+//! Printing CUDA float code
+char *basic_str_cudacode_float(const basic s);
 //! Printing JavaScript code
 char *basic_str_jscode(const basic s);
 //! Frees the string s

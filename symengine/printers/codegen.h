@@ -20,6 +20,11 @@ public:
     void bvisit(const Interval &x);
     void bvisit(const Contains &x);
     void bvisit(const Piecewise &x);
+    void bvisit(const BooleanAtom &x);
+    void bvisit(const And &x);
+    void bvisit(const Or &x);
+    void bvisit(const Xor &x);
+    void bvisit(const Not &x);
     void bvisit(const Rational &x);
     void bvisit(const EmptySet &x);
     void bvisit(const FiniteSet &x);
@@ -38,6 +43,8 @@ public:
     void bvisit(const Unequality &x);
     void bvisit(const LessThan &x);
     void bvisit(const StrictLessThan &x);
+    void bvisit(const Sign &x);
+    void bvisit(const UnevaluatedExpr &x);
     void bvisit(const UnivariateSeries &x);
     void bvisit(const Derivative &x);
     void bvisit(const Subs &x);
@@ -66,6 +73,38 @@ public:
                     const RCP<const Basic> &b) override;
     void bvisit(const Gamma &x);
     void bvisit(const LogGamma &x);
+};
+
+class CudaCodePrinter : public BaseVisitor<CudaCodePrinter, C99CodePrinter>
+{
+public:
+    using C99CodePrinter::apply;
+    using C99CodePrinter::bvisit;
+    using C99CodePrinter::str_;
+    void bvisit(const Integer &x);
+    void bvisit(const Constant &x);
+    void bvisit(const NaN &x);
+    void bvisit(const Infty &x);
+};
+
+class CudaFloatCodePrinter
+    : public BaseVisitor<CudaFloatCodePrinter, CudaCodePrinter>
+{
+public:
+    using CudaCodePrinter::apply;
+    using CudaCodePrinter::bvisit;
+    using CudaCodePrinter::str_;
+    void bvisit(const BooleanAtom &x);
+    void bvisit(const Integer &x);
+    void bvisit(const Rational &x);
+    void bvisit(const RealDouble &x);
+#ifdef HAVE_SYMENGINE_MPFR
+    void bvisit(const RealMPFR &x);
+#endif
+    void bvisit(const Constant &x);
+    void bvisit(const NaN &x);
+    void bvisit(const Infty &x);
+    void bvisit(const Sign &x);
 };
 
 class JSCodePrinter : public BaseVisitor<JSCodePrinter, CodePrinter>

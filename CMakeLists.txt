@@ -488,6 +488,8 @@ set(WITH_SYMENGINE_THREAD_SAFE "${BUILD_FOR_DISTRIBUTION}"
 # TESTS
 set(BUILD_TESTS yes
     CACHE BOOL "Build SymEngine tests")
+set(BUILD_CUDA_TESTS no
+    CACHE BOOL "Build CUDA integration tests for the CUDA printer")
 
 # Teuchos
 set(WITH_SYMENGINE_TEUCHOS no
