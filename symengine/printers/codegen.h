@@ -17,6 +17,9 @@ public:
     using StrPrinter::apply;
     using StrPrinter::bvisit;
     using StrPrinter::str_;
+    std::string apply(const RCP<const Basic> &b);
+    std::string apply(const vec_basic &v);
+    std::string apply(const Basic &b);
     void bvisit(const Basic &x);
     void bvisit(const Complex &x);
     void bvisit(const Dummy &x);
@@ -63,6 +66,8 @@ protected:
     CodePrinterPrecision precision_;
     std::string print_scalar_literal(double d) const;
     std::string print_math_function(const std::string &name) const;
+    virtual std::string
+    format_codegen_function_name(const std::string &name) const;
     std::string print_binary_reduction(const vec_basic &args,
                                        const std::string &func_name);
     std::string print_binary_reduction_impl(vec_basic::const_iterator begin,
@@ -128,9 +133,12 @@ public:
     void bvisit(const Truncate &x);
     void bvisit(const Max &x);
     void bvisit(const Min &x);
-    void bvisit(const Function &x);
     void _print_pow(std::ostringstream &o, const RCP<const Basic> &a,
                     const RCP<const Basic> &b) override;
+
+protected:
+    std::string
+    format_codegen_function_name(const std::string &name) const override;
 };
 
 class JSCodePrinter : public BaseVisitor<JSCodePrinter, CodePrinter>
@@ -147,6 +155,10 @@ public:
     void bvisit(const Cos &x);
     void bvisit(const Max &x);
     void bvisit(const Min &x);
+
+protected:
+    std::string
+    format_codegen_function_name(const std::string &name) const override;
 };
 } // namespace SymEngine
 

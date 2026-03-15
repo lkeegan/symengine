@@ -8,6 +8,7 @@
 using SymEngine::abs;
 using SymEngine::acos;
 using SymEngine::acosh;
+using SymEngine::acoth;
 using SymEngine::add;
 using SymEngine::asin;
 using SymEngine::asinh;
@@ -25,6 +26,7 @@ using SymEngine::ceiling;
 using SymEngine::CodePrinterPrecision;
 using SymEngine::cos;
 using SymEngine::cosh;
+using SymEngine::cot;
 using SymEngine::coth;
 using SymEngine::cudacode;
 using SymEngine::CudaCodePrinter;
@@ -260,7 +262,7 @@ TEST_CASE("Rational", "[ccode][cudacode]")
     REQUIRE(cudacode(*p, CodePrinterPrecision::Float) == "-1.0f/3.0f");
 }
 
-TEST_CASE("Functions", "[ccode][cudacode]")
+TEST_CASE("Functions", "[ccode][cudacode][metalcode]")
 {
     auto a = symbol("a");
     auto b = symbol("b");
@@ -301,6 +303,12 @@ TEST_CASE("Functions", "[ccode][cudacode]")
     REQUIRE(ccode(*p, CodePrinterPrecision::Float) == "tanf(x)");
     REQUIRE(cudacode(*p) == "tan(x)");
     REQUIRE(cudacode(*p, CodePrinterPrecision::Float) == "tanf(x)");
+    p = cot(x);
+    REQUIRE(ccode(*p) == "1/tan(x)");
+    REQUIRE(ccode(*p, CodePrinterPrecision::Float) == "1.0f/tanf(x)");
+    REQUIRE(cudacode(*p) == "1.0/tan(x)");
+    REQUIRE(cudacode(*p, CodePrinterPrecision::Float) == "1.0f/tanf(x)");
+    REQUIRE(metalcode(*p) == "1.0f/tan(x)");
     p = atan2(x, y);
     REQUIRE(ccode(*p) == "atan2(x, y)");
     REQUIRE(ccode(*p, CodePrinterPrecision::Float) == "atan2f(x, y)");
@@ -331,6 +339,12 @@ TEST_CASE("Functions", "[ccode][cudacode]")
     REQUIRE(ccode(*p, CodePrinterPrecision::Float) == "tanhf(x)");
     REQUIRE(cudacode(*p) == "tanh(x)");
     REQUIRE(cudacode(*p, CodePrinterPrecision::Float) == "tanhf(x)");
+    p = coth(x);
+    REQUIRE(ccode(*p) == "1/tanh(x)");
+    REQUIRE(ccode(*p, CodePrinterPrecision::Float) == "1.0f/tanhf(x)");
+    REQUIRE(cudacode(*p) == "1.0/tanh(x)");
+    REQUIRE(cudacode(*p, CodePrinterPrecision::Float) == "1.0f/tanhf(x)");
+    REQUIRE(metalcode(*p) == "1.0f/tanh(x)");
     p = asinh(x);
     REQUIRE(ccode(*p) == "asinh(x)");
     REQUIRE(ccode(*p, CodePrinterPrecision::Float) == "asinhf(x)");
@@ -346,6 +360,12 @@ TEST_CASE("Functions", "[ccode][cudacode]")
     REQUIRE(ccode(*p, CodePrinterPrecision::Float) == "atanhf(x)");
     REQUIRE(cudacode(*p) == "atanh(x)");
     REQUIRE(cudacode(*p, CodePrinterPrecision::Float) == "atanhf(x)");
+    p = acoth(x);
+    REQUIRE(ccode(*p) == "atanh(1/x)");
+    REQUIRE(ccode(*p, CodePrinterPrecision::Float) == "atanhf(1.0f/x)");
+    REQUIRE(cudacode(*p) == "atanh(1.0/x)");
+    REQUIRE(cudacode(*p, CodePrinterPrecision::Float) == "atanhf(1.0f/x)");
+    REQUIRE(metalcode(*p) == "atanh(1.0f/x)");
     p = floor(x);
     REQUIRE(ccode(*p) == "floor(x)");
     REQUIRE(ccode(*p, CodePrinterPrecision::Float) == "floorf(x)");
@@ -505,6 +525,14 @@ TEST_CASE("JavaScript math functions", "[jscode]")
     REQUIRE(jscode(*p) == "Math.sin(x)");
     p = cos(x);
     REQUIRE(jscode(*p) == "Math.cos(x)");
+    p = cot(x);
+    REQUIRE(jscode(*p) == "1/Math.tan(x)");
+    p = asec(x);
+    REQUIRE(jscode(*p) == "Math.acos(1/x)");
+    p = sech(x);
+    REQUIRE(jscode(*p) == "1/Math.cosh(x)");
+    p = acoth(x);
+    REQUIRE(jscode(*p) == "Math.atanh(1/x)");
     p = max({x, y, z});
     REQUIRE(jscode(*p) == "Math.max(x, y, z)");
     p = min({x, y, z});
@@ -512,5 +540,8 @@ TEST_CASE("JavaScript math functions", "[jscode]")
     p = exp(x);
     REQUIRE(jscode(*p) == "Math.exp(x)");
     JSCodePrinter JS;
+    REQUIRE(JS.apply(cot(x)) == "1/Math.tan(x)");
+    REQUIRE(JS.apply(SymEngine::vec_basic{cot(x), acoth(x)})
+            == "1/Math.tan(x), Math.atanh(1/x)");
     REQUIRE(JS.apply(pi) == "Math.PI");
 }
