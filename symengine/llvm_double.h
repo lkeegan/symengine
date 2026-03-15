@@ -70,6 +70,18 @@ public:
     void bvisit(const Pow &x);
     void bvisit(const Log &x);
     void bvisit(const Abs &x);
+    void bvisit(const Cot &x);
+    void bvisit(const Csc &x);
+    void bvisit(const Sec &x);
+    void bvisit(const ACot &x);
+    void bvisit(const ACsc &x);
+    void bvisit(const ASec &x);
+    void bvisit(const Csch &x);
+    void bvisit(const Sech &x);
+    void bvisit(const Coth &x);
+    void bvisit(const ACsch &x);
+    void bvisit(const ASech &x);
+    void bvisit(const ACoth &x);
     void bvisit(const Symbol &x);
     void bvisit(const Constant &x);
     void bvisit(const Basic &);

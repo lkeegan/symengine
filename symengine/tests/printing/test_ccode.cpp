@@ -8,6 +8,7 @@
 using SymEngine::abs;
 using SymEngine::acos;
 using SymEngine::acosh;
+using SymEngine::acoth;
 using SymEngine::add;
 using SymEngine::asin;
 using SymEngine::asinh;
@@ -24,6 +25,7 @@ using SymEngine::ccode;
 using SymEngine::ceiling;
 using SymEngine::cos;
 using SymEngine::cosh;
+using SymEngine::cot;
 using SymEngine::coth;
 using SymEngine::cudacode;
 using SymEngine::cudacode_float;
@@ -46,6 +48,7 @@ using SymEngine::Interval;
 using SymEngine::interval;
 using SymEngine::jscode;
 using SymEngine::JSCodePrinter;
+using SymEngine::lambertw;
 using SymEngine::Le;
 using SymEngine::log;
 using SymEngine::loggamma;
@@ -125,9 +128,21 @@ TEST_CASE("CUDA-code printers", "[CudaCodePrinter]")
     REQUIRE(cudacode(*p) == "sin(x)");
     REQUIRE(cudacode_float(*p) == "sin(x)");
 
+    p = cot(x);
+    REQUIRE(cudacode(*p) == "1.0/tan(x)");
+    REQUIRE(cudacode_float(*p) == "1.0f/tan(x)");
+
     p = coth(x);
-    REQUIRE(cudacode(*p) == "coth(x)");
-    REQUIRE(cudacode_float(*p) == "coth(x)");
+    REQUIRE(cudacode(*p) == "1.0/tanh(x)");
+    REQUIRE(cudacode_float(*p) == "1.0f/tanh(x)");
+
+    p = acoth(x);
+    REQUIRE(cudacode(*p) == "atanh(1.0/x)");
+    REQUIRE(cudacode_float(*p) == "atanh(1.0f/x)");
+
+    CHECK_THROWS_AS(cudacode(*lambertw(x)), SymEngine::SymEngineException);
+    CHECK_THROWS_AS(cudacode_float(*lambertw(x)),
+                    SymEngine::SymEngineException);
 }
 
 TEST_CASE("Codegen boolean support", "[CodePrinter][CudaCodePrinter]")
@@ -210,6 +225,8 @@ TEST_CASE("Functions", "[ccode]")
     REQUIRE(ccode(*p) == "cos(x)");
     p = tan(x);
     REQUIRE(ccode(*p) == "tan(x)");
+    p = cot(x);
+    REQUIRE(ccode(*p) == "1/tan(x)");
     p = atan2(x, y);
     REQUIRE(ccode(*p) == "atan2(x, y)");
     p = exp(x);
@@ -222,12 +239,16 @@ TEST_CASE("Functions", "[ccode]")
     REQUIRE(ccode(*p) == "cosh(x)");
     p = tanh(x);
     REQUIRE(ccode(*p) == "tanh(x)");
+    p = coth(x);
+    REQUIRE(ccode(*p) == "1/tanh(x)");
     p = asinh(x);
     REQUIRE(ccode(*p) == "asinh(x)");
     p = acosh(x);
     REQUIRE(ccode(*p) == "acosh(x)");
     p = atanh(x);
     REQUIRE(ccode(*p) == "atanh(x)");
+    p = acoth(x);
+    REQUIRE(ccode(*p) == "atanh(1/x)");
     p = floor(x);
     REQUIRE(ccode(*p) == "floor(x)");
     p = ceiling(x);
@@ -246,6 +267,8 @@ TEST_CASE("Functions", "[ccode]")
     REQUIRE(ccode(*p) == "fmax(x, fmax(y, z))");
     p = min({x, y, z});
     REQUIRE(ccode(*p) == "fmin(x, fmin(y, z))");
+
+    CHECK_THROWS_AS(ccode(*lambertw(x)), SymEngine::SymEngineException);
 }
 
 TEST_CASE("Relationals", "[ccode]")

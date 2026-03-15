@@ -1,4 +1,5 @@
 #include <symengine/printers/codegen.h>
+#include <symengine/codegen_lowering.h>
 #include <symengine/printers.h>
 #include <symengine/symengine_exception.h>
 
@@ -11,6 +12,64 @@ namespace
 std::string print_float_literal(double d)
 {
     return print_double(d) + "f";
+}
+
+std::string print_function_name(const Function &x)
+{
+    static const std::vector<std::string> names_ = init_str_printer_names();
+    const auto &name = names_[x.get_type_code()];
+    if (name.empty()) {
+        return "unknown";
+    }
+    return name;
+}
+
+template <typename Printer>
+std::string print_function_call(Printer &printer, const std::string &name,
+                                const vec_basic &args)
+{
+    std::ostringstream o;
+    o << name << "(";
+    for (size_t i = 0; i < args.size(); ++i) {
+        if (i != 0) {
+            o << ", ";
+        }
+        o << printer.apply(args[i]);
+    }
+    o << ")";
+    return o.str();
+}
+
+template <typename Printer>
+std::string print_codegen_function(Printer &printer, const Function &x)
+{
+    switch (x.get_type_code()) {
+        case SYMENGINE_SIN:
+        case SYMENGINE_COS:
+        case SYMENGINE_TAN:
+        case SYMENGINE_ASIN:
+        case SYMENGINE_ACOS:
+        case SYMENGINE_ATAN:
+        case SYMENGINE_ATAN2:
+        case SYMENGINE_SINH:
+        case SYMENGINE_COSH:
+        case SYMENGINE_TANH:
+        case SYMENGINE_ASINH:
+        case SYMENGINE_ACOSH:
+        case SYMENGINE_ATANH:
+        case SYMENGINE_LOG:
+        case SYMENGINE_FLOOR:
+        case SYMENGINE_ERF:
+        case SYMENGINE_ERFC:
+            return print_function_call(printer, print_function_name(x),
+                                       x.get_args());
+        default:
+            if (is_lowerable_codegen_function(x)) {
+                return printer.apply(*lower_codegen_function(x));
+            }
+            throw SymEngineException("Code generation does not support "
+                                     + print_function_name(x));
+    }
 }
 
 } // namespace
@@ -269,6 +328,10 @@ void CodePrinter::bvisit(const StrictLessThan &x)
     s << apply(x.get_arg1()) << " < " << apply(x.get_arg2());
     str_ = s.str();
 }
+void CodePrinter::bvisit(const Function &x)
+{
+    str_ = print_codegen_function(*this, x);
+}
 void CodePrinter::bvisit(const Sign &x)
 {
     const std::string arg = apply(x.get_arg());
@@ -318,6 +381,8 @@ void C89CodePrinter::_print_pow(std::ostringstream &o,
 {
     if (eq(*a, *E)) {
         o << "exp(" << apply(b) << ")";
+    } else if (eq(*b, *minus_one)) {
+        o << apply(*one) << "/" << parenthesizeLE(a, PrecedenceEnum::Mul);
     } else if (eq(*b, *rational(1, 2))) {
         o << "sqrt(" << apply(a) << ")";
     } else {
@@ -342,6 +407,8 @@ void C99CodePrinter::_print_pow(std::ostringstream &o,
 {
     if (eq(*a, *E)) {
         o << "exp(" << apply(b) << ")";
+    } else if (eq(*b, *minus_one)) {
+        o << apply(*one) << "/" << parenthesizeLE(a, PrecedenceEnum::Mul);
     } else if (eq(*b, *rational(1, 2))) {
         o << "sqrt(" << apply(a) << ")";
     } else if (eq(*b, *rational(1, 3))) {
@@ -367,6 +434,12 @@ void CudaCodePrinter::bvisit(const Integer &x)
 {
     str_ = print_double(mp_get_d(x.as_integer_class()));
 }
+
+void CudaCodePrinter::bvisit(const Function &x)
+{
+    str_ = print_codegen_function(*this, x);
+}
+
 void CudaCodePrinter::bvisit(const Constant &x)
 {
     if (eq(x, *E)) {
@@ -396,6 +469,11 @@ void CudaCodePrinter::bvisit(const Infty &x)
 void CudaFloatCodePrinter::bvisit(const BooleanAtom &x)
 {
     str_ = print_float_literal(x.get_val() ? 1.0 : 0.0);
+}
+
+void CudaFloatCodePrinter::bvisit(const Function &x)
+{
+    str_ = print_codegen_function(*this, x);
 }
 
 void CudaFloatCodePrinter::bvisit(const Integer &x)

@@ -43,6 +43,7 @@ public:
     void bvisit(const Unequality &x);
     void bvisit(const LessThan &x);
     void bvisit(const StrictLessThan &x);
+    void bvisit(const Function &x);
     void bvisit(const Sign &x);
     void bvisit(const UnevaluatedExpr &x);
     void bvisit(const UnivariateSeries &x);
@@ -81,6 +82,7 @@ public:
     using C99CodePrinter::apply;
     using C99CodePrinter::bvisit;
     using C99CodePrinter::str_;
+    void bvisit(const Function &x);
     void bvisit(const Integer &x);
     void bvisit(const Constant &x);
     void bvisit(const NaN &x);
@@ -94,6 +96,7 @@ public:
     using CudaCodePrinter::apply;
     using CudaCodePrinter::bvisit;
     using CudaCodePrinter::str_;
+    void bvisit(const Function &x);
     void bvisit(const BooleanAtom &x);
     void bvisit(const Integer &x);
     void bvisit(const Rational &x);

@@ -19,15 +19,40 @@
 #include <symengine/printers.h>
 #include <symengine/sets.h>
 
+using SymEngine::abs;
+using SymEngine::acos;
+using SymEngine::acosh;
+using SymEngine::acot;
+using SymEngine::acoth;
+using SymEngine::acsc;
+using SymEngine::acsch;
 using SymEngine::add;
+using SymEngine::asec;
+using SymEngine::asech;
+using SymEngine::asin;
+using SymEngine::asinh;
+using SymEngine::atan;
+using SymEngine::atan2;
+using SymEngine::atanh;
 using SymEngine::Basic;
 using SymEngine::boolFalse;
 using SymEngine::boolTrue;
 using SymEngine::cbrt;
+using SymEngine::ceiling;
 using SymEngine::contains;
+using SymEngine::cos;
+using SymEngine::cosh;
+using SymEngine::cot;
+using SymEngine::coth;
+using SymEngine::csc;
+using SymEngine::csch;
 using SymEngine::cudacode;
 using SymEngine::cudacode_float;
 using SymEngine::E;
+using SymEngine::Eq;
+using SymEngine::erf;
+using SymEngine::erfc;
+using SymEngine::floor;
 using SymEngine::gamma;
 using SymEngine::Ge;
 using SymEngine::Gt;
@@ -35,6 +60,8 @@ using SymEngine::Inf;
 using SymEngine::integer;
 using SymEngine::interval;
 using SymEngine::LambdaRealDoubleVisitor;
+using SymEngine::Le;
+using SymEngine::log;
 using SymEngine::loggamma;
 using SymEngine::logical_and;
 using SymEngine::logical_not;
@@ -42,16 +69,25 @@ using SymEngine::logical_or;
 using SymEngine::logical_xor;
 using SymEngine::Lt;
 using SymEngine::max;
+using SymEngine::min;
 using SymEngine::mul;
 using SymEngine::Nan;
+using SymEngine::Ne;
 using SymEngine::NegInf;
 using SymEngine::pi;
 using SymEngine::piecewise;
 using SymEngine::pow;
 using SymEngine::RCP;
+using SymEngine::sec;
+using SymEngine::sech;
 using SymEngine::sign;
+using SymEngine::sin;
+using SymEngine::sinh;
 using SymEngine::sqrt;
 using SymEngine::symbol;
+using SymEngine::tan;
+using SymEngine::tanh;
+using SymEngine::truncate;
 using SymEngine::unevaluated_expr;
 using SymEngine::vec_basic;
 
@@ -240,7 +276,31 @@ TEST_CASE("CUDA code matches Lambda visitor", "[cuda][cudacode]")
 
     auto arithmetic = add(add(add(add(x, mul(x, y)), pow(x, y)), cbrt(x)),
                           sqrt(integer(2)));
-    auto max_expr = max({x, y, z});
+    auto trig_expr = add(sin(x), add(cos(y), tan(z)));
+    auto reciprocal_trig_expr = add(cot(x), add(csc(y), sec(z)));
+    auto inverse_trig_expr = add(asin(x), add(acos(y), atan(z)));
+    auto reciprocal_inverse_trig_expr = add(acot(x), add(acsc(y), asec(z)));
+    auto hyperbolic_expr = add(sinh(x), add(cosh(y), tanh(z)));
+    auto reciprocal_hyperbolic_expr = add(csch(x), add(sech(y), coth(z)));
+    auto inverse_hyperbolic_expr = add(asinh(x), add(acosh(y), atanh(z)));
+    auto reciprocal_inverse_hyperbolic_expr
+        = add(acsch(x), add(asech(y), acoth(z)));
+    auto special_function_expr
+        = add(gamma(x), add(loggamma(y), add(erf(z), erfc(x))));
+    auto extrema_expr = add(max({x, y, z}),
+                            add(min({x, y, z}), atan2(x, add(y, integer(1)))));
+    auto rounding_expr
+        = add(abs(x), add(floor(y), add(ceiling(z), truncate(add(x, y)))));
+    auto relational_expr
+        = add(add(boolTrue, boolFalse),
+              add(Eq(x, integer(2)),
+                  add(Ne(y, integer(3)), add(Le(x, y), Lt(y, z)))));
+    auto logical_expr
+        = add(logical_and({Lt(x, integer(6)), Gt(x, integer(5))}),
+              add(logical_or({Lt(x, integer(2)), Gt(y, integer(5))}),
+                  add(logical_xor({Lt(x, integer(2)), Gt(y, integer(5))}),
+                      logical_not(logical_xor(
+                          {Lt(x, integer(2)), Gt(y, integer(5))})))));
     auto piecewise_expr = piecewise(
         {{x, contains(x, interval(NegInf, integer(2), true, false))},
          {y, contains(x, interval(integer(2), integer(5), true, false))},
@@ -255,14 +315,52 @@ TEST_CASE("CUDA code matches Lambda visitor", "[cuda][cudacode]")
 
     std::vector<RuntimeCase> cases = {
         {"arithmetic", arithmetic, {3.0, 4.0, -2.0}, 1e-12, 5e-6},
+        {"exp", pow(E, cos(x)), {1.3, 4.0, -2.0}, 1e-12, 1e-6},
+        {"log", log(add(x, integer(2))), {1.2, 4.0, -2.0}, 1e-12, 1e-6},
         {"integer base power",
          pow(integer(2), x),
          {3.0, 4.0, -2.0},
          1e-12,
          1e-6},
-        {"gamma", gamma(x), {3.0, 4.0, -2.0}, 1e-11, 1e-5},
-        {"loggamma", loggamma(x), {3.0, 4.0, -2.0}, 1e-11, 1e-5},
-        {"max", max_expr, {3.0, 4.0, -2.0}, 1e-12, 1e-6},
+        {"trigonometric", trig_expr, {1.2, 0.7, 0.3}, 1e-12, 1e-6},
+        {"reciprocal trigonometric",
+         reciprocal_trig_expr,
+         {0.9, 0.5, 0.7},
+         1e-12,
+         1e-6},
+        {"inverse trigonometric",
+         inverse_trig_expr,
+         {0.5, 0.9, 0.7},
+         1e-12,
+         1e-6},
+        {"reciprocal inverse trigonometric",
+         reciprocal_inverse_trig_expr,
+         {3.0, 4.0, 1.1},
+         1e-12,
+         1e-6},
+        {"hyperbolic", hyperbolic_expr, {1.2, 0.7, 0.3}, 1e-12, 1e-6},
+        {"reciprocal hyperbolic",
+         reciprocal_hyperbolic_expr,
+         {2.2, 0.5, 0.9},
+         1e-12,
+         1e-6},
+        {"inverse hyperbolic",
+         inverse_hyperbolic_expr,
+         {1.2, 1.5, 0.7},
+         1e-12,
+         1e-6},
+        {"reciprocal inverse hyperbolic",
+         reciprocal_inverse_hyperbolic_expr,
+         {0.3, 0.5, 3.3},
+         1e-12,
+         1e-6},
+        {"special functions",
+         special_function_expr,
+         {1.1, 1.3, 0.7},
+         1e-11,
+         1e-5},
+        {"extrema and atan2", extrema_expr, {2.1, 0.7, -1.0}, 1e-12, 1e-6},
+        {"rounding and abs", rounding_expr, {-1.2, 1.8, -1.3}, 1e-12, 1e-6},
         {"piecewise lower branch",
          piecewise_expr,
          {1.0, 4.0, -2.0},
@@ -282,33 +380,12 @@ TEST_CASE("CUDA code matches Lambda visitor", "[cuda][cudacode]")
         {"constant pi", pi, {3.0, 4.0, -2.0}, 1e-12, 1e-6},
         {"positive infinity", Inf, {3.0, 4.0, -2.0}, 1e-12, 1e-6},
         {"nan", Nan, {3.0, 4.0, -2.0}, 1e-12, 1e-6},
-        {"bool true", boolTrue, {3.0, 4.0, -2.0}, 1e-12, 1e-6},
-        {"bool false", boolFalse, {3.0, 4.0, -2.0}, 1e-12, 1e-6},
-        {"logical and true",
-         logical_and({Lt(x, integer(6)), Gt(x, integer(5))}),
-         {5.5, 4.0, -2.0},
+        {"booleans and relationals",
+         relational_expr,
+         {2.0, 4.0, 5.0},
          1e-12,
          1e-6},
-        {"logical and false",
-         logical_and({Lt(x, integer(6)), Gt(x, integer(5))}),
-         {4.0, 4.0, -2.0},
-         1e-12,
-         1e-6},
-        {"logical or",
-         logical_or({Lt(x, integer(2)), Gt(y, integer(5))}),
-         {3.0, 6.0, -2.0},
-         1e-12,
-         1e-6},
-        {"logical xor",
-         logical_xor({Lt(x, integer(2)), Gt(y, integer(5))}),
-         {3.0, 6.0, -2.0},
-         1e-12,
-         1e-6},
-        {"logical not",
-         logical_not(logical_xor({Lt(x, integer(2)), Gt(y, integer(5))})),
-         {3.0, 4.0, -2.0},
-         1e-12,
-         1e-6},
+        {"logical operators", logical_expr, {5.5, 6.0, -2.0}, 1e-12, 1e-6},
         {"sign negative", sign(a), {-0.5, 4.0, -1.0}, 1e-12, 1e-6},
         {"sign zero", sign(a), {1.0, 4.0, -1.0}, 1e-12, 1e-6},
         {"sign positive", sign(a), {3.0, 4.0, -1.0}, 1e-12, 1e-6},

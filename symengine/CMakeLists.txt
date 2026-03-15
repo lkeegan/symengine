@@ -37,6 +37,7 @@ add_subdirectory(utilities/matchpycpp)
 set(SRC
     add.cpp
     basic.cpp
+    codegen_lowering.cpp
     complex.cpp
     complex_double.cpp
     constants.cpp

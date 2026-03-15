@@ -35,6 +35,7 @@
 #include <fstream>
 
 #include <symengine/llvm_double.h>
+#include <symengine/codegen_lowering.h>
 #include <symengine/eval_double.h>
 #include <symengine/eval.h>
 
@@ -696,6 +697,25 @@ void LLVMVisitor::bvisit(const Log &x)
     r->setTailCall(true);
     result_ = r;
 }
+
+#define SYMENGINE_LOWERED_CODEGEN_FUNCTION(Class)                              \
+    void LLVMVisitor::bvisit(const Class &x)                                   \
+    {                                                                          \
+        result_ = apply(*lower_codegen_function(x));                           \
+    }
+
+SYMENGINE_LOWERED_CODEGEN_FUNCTION(Cot)
+SYMENGINE_LOWERED_CODEGEN_FUNCTION(Csc)
+SYMENGINE_LOWERED_CODEGEN_FUNCTION(Sec)
+SYMENGINE_LOWERED_CODEGEN_FUNCTION(ACot)
+SYMENGINE_LOWERED_CODEGEN_FUNCTION(ACsc)
+SYMENGINE_LOWERED_CODEGEN_FUNCTION(ASec)
+SYMENGINE_LOWERED_CODEGEN_FUNCTION(Csch)
+SYMENGINE_LOWERED_CODEGEN_FUNCTION(Sech)
+SYMENGINE_LOWERED_CODEGEN_FUNCTION(Coth)
+SYMENGINE_LOWERED_CODEGEN_FUNCTION(ACsch)
+SYMENGINE_LOWERED_CODEGEN_FUNCTION(ASech)
+SYMENGINE_LOWERED_CODEGEN_FUNCTION(ACoth)
 
 #define SYMENGINE_LOGIC_FUNCTION(Class, method)                                \
     void LLVMVisitor::bvisit(const Class &x)                                   \
