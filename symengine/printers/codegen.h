@@ -11,6 +11,8 @@ namespace SymEngine
 class CodePrinter : public BaseVisitor<CodePrinter, StrPrinter>
 {
 public:
+    explicit CodePrinter(CodePrinterPrecision precision
+                         = CodePrinterPrecision::Double);
     using StrPrinter::apply;
     using StrPrinter::bvisit;
     using StrPrinter::str_;
@@ -25,6 +27,7 @@ public:
     void bvisit(const Or &x);
     void bvisit(const Xor &x);
     void bvisit(const Not &x);
+    void bvisit(const Integer &x);
     void bvisit(const Rational &x);
     void bvisit(const EmptySet &x);
     void bvisit(const FiniteSet &x);
@@ -49,11 +52,23 @@ public:
     void bvisit(const Derivative &x);
     void bvisit(const Subs &x);
     void bvisit(const GaloisField &x);
+    void bvisit(const Function &x);
+    void bvisit(const RealDouble &x);
+#ifdef HAVE_SYMENGINE_MPFR
+    void bvisit(const RealMPFR &x);
+#endif
+
+protected:
+    CodePrinterPrecision precision_;
+    std::string print_scalar_literal(double d) const;
+    std::string print_math_function(const std::string &name) const;
 };
 
 class C89CodePrinter : public BaseVisitor<C89CodePrinter, CodePrinter>
 {
 public:
+    explicit C89CodePrinter(CodePrinterPrecision precision
+                            = CodePrinterPrecision::Double);
     using CodePrinter::apply;
     using CodePrinter::bvisit;
     using CodePrinter::str_;
@@ -65,6 +80,8 @@ public:
 class C99CodePrinter : public BaseVisitor<C99CodePrinter, C89CodePrinter>
 {
 public:
+    explicit C99CodePrinter(CodePrinterPrecision precision
+                            = CodePrinterPrecision::Double);
     using C89CodePrinter::apply;
     using C89CodePrinter::bvisit;
     using C89CodePrinter::str_;
@@ -78,6 +95,8 @@ public:
 class CudaCodePrinter : public BaseVisitor<CudaCodePrinter, C99CodePrinter>
 {
 public:
+    explicit CudaCodePrinter(CodePrinterPrecision precision
+                             = CodePrinterPrecision::Double);
     using C99CodePrinter::apply;
     using C99CodePrinter::bvisit;
     using C99CodePrinter::str_;
@@ -85,26 +104,6 @@ public:
     void bvisit(const Constant &x);
     void bvisit(const NaN &x);
     void bvisit(const Infty &x);
-};
-
-class CudaFloatCodePrinter
-    : public BaseVisitor<CudaFloatCodePrinter, CudaCodePrinter>
-{
-public:
-    using CudaCodePrinter::apply;
-    using CudaCodePrinter::bvisit;
-    using CudaCodePrinter::str_;
-    void bvisit(const BooleanAtom &x);
-    void bvisit(const Integer &x);
-    void bvisit(const Rational &x);
-    void bvisit(const RealDouble &x);
-#ifdef HAVE_SYMENGINE_MPFR
-    void bvisit(const RealMPFR &x);
-#endif
-    void bvisit(const Constant &x);
-    void bvisit(const NaN &x);
-    void bvisit(const Infty &x);
-    void bvisit(const Sign &x);
 };
 
 class JSCodePrinter : public BaseVisitor<JSCodePrinter, CodePrinter>

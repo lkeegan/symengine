@@ -64,8 +64,8 @@ using SymEngine::get_mpq_t;
 using SymEngine::get_mpz_t;
 #endif
 using SymEngine::ccode;
+using SymEngine::CodePrinterPrecision;
 using SymEngine::cudacode;
-using SymEngine::cudacode_float;
 using SymEngine::diag;
 using SymEngine::eye;
 using SymEngine::jscode;
@@ -686,8 +686,55 @@ IMPLEMENT_STR_CONVERSION(str_mathml, mathml)
 IMPLEMENT_STR_CONVERSION(str_latex, latex)
 IMPLEMENT_STR_CONVERSION(str_ccode, ccode)
 IMPLEMENT_STR_CONVERSION(str_cudacode, cudacode)
-IMPLEMENT_STR_CONVERSION(str_cudacode_float, cudacode_float)
 IMPLEMENT_STR_CONVERSION(str_jscode, jscode)
+
+namespace
+{
+
+CodePrinterPrecision to_code_printer_precision(CodePrinterPrecision_C precision)
+{
+    switch (precision) {
+        case SYMENGINE_DOUBLE:
+            return CodePrinterPrecision::Double;
+        case SYMENGINE_FLOAT:
+            return CodePrinterPrecision::Float;
+        default:
+            throw SymEngineException("Unknown code printer precision");
+    }
+}
+
+} // namespace
+
+char *basic_str_ccode_precision(const basic s, CodePrinterPrecision_C precision)
+{
+    std::string str;
+    try {
+        str = ccode(*s->m, to_code_printer_precision(precision));
+    } catch (SymEngineException &e) {
+        return nullptr;
+    } catch (...) {
+        return nullptr;
+    }
+    auto cc = new char[str.length() + 1];
+    std::strcpy(cc, str.c_str());
+    return cc;
+}
+
+char *basic_str_cudacode_precision(const basic s,
+                                   CodePrinterPrecision_C precision)
+{
+    std::string str;
+    try {
+        str = cudacode(*s->m, to_code_printer_precision(precision));
+    } catch (SymEngineException &e) {
+        return nullptr;
+    } catch (...) {
+        return nullptr;
+    }
+    auto cc = new char[str.length() + 1];
+    std::strcpy(cc, str.c_str());
+    return cc;
+}
 
 void basic_str_free(char *s)
 {

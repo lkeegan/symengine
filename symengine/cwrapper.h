@@ -41,6 +41,12 @@ typedef enum {
     SYMENGINE_TypeID_Count
 } TypeID;
 
+//! Precision for code printers (ccode, cudacode)
+typedef enum {
+    SYMENGINE_DOUBLE = 0,
+    SYMENGINE_FLOAT = 1,
+} CodePrinterPrecision_C;
+
 //! Struct to hold the real and imaginary parts of std::complex<double>
 //! extracted from basic
 typedef struct dcomplex {
@@ -387,10 +393,14 @@ char *basic_str_mathml(const basic s);
 char *basic_str_latex(const basic s);
 //! Printing C code
 char *basic_str_ccode(const basic s);
+//! Printing C code with the selected precision
+char *basic_str_ccode_precision(const basic s,
+                                CodePrinterPrecision_C precision);
 //! Printing CUDA code
 char *basic_str_cudacode(const basic s);
-//! Printing CUDA float code
-char *basic_str_cudacode_float(const basic s);
+//! Printing CUDA code with the selected precision
+char *basic_str_cudacode_precision(const basic s,
+                                   CodePrinterPrecision_C precision);
 //! Printing JavaScript code
 char *basic_str_jscode(const basic s);
 //! Frees the string s
