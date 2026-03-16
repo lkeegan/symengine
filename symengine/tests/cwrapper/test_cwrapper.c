@@ -117,8 +117,8 @@ void test_cwrapper()
     SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123.0))") == 0);
     basic_str_free(s);
 
-    s = basic_str_cudacode_float(e);
-    SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123.0f))") == 0);
+    s = basic_str_cudacode_precision(e, 1);
+    SYMENGINE_C_ASSERT(strcmp(s, "expf(sqrtf(123.0f))") == 0);
     basic_str_free(s);
 
 #if HAVE_SYMENGINE_RTTI

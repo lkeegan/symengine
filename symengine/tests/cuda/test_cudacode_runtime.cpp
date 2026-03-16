@@ -26,7 +26,7 @@ using SymEngine::boolTrue;
 using SymEngine::cbrt;
 using SymEngine::contains;
 using SymEngine::cudacode;
-using SymEngine::cudacode_float;
+using SymEngine::CodePrinterPrecision;
 using SymEngine::E;
 using SymEngine::gamma;
 using SymEngine::Ge;
@@ -196,7 +196,8 @@ void require_codegen_match(const RuntimeCase &runtime_case,
 {
     const std::string cuda_code = mode == CudaScalarMode::Double
                                       ? cudacode(*runtime_case.expr)
-                                      : cudacode_float(*runtime_case.expr);
+                                      : cudacode(*runtime_case.expr,
+                                                 CodePrinterPrecision::Float);
     const double host_value
         = evaluate_on_host(symbols, *runtime_case.expr, runtime_case.input);
     const double device_value

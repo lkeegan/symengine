@@ -387,10 +387,12 @@ char *basic_str_mathml(const basic s);
 char *basic_str_latex(const basic s);
 //! Printing C code
 char *basic_str_ccode(const basic s);
+//! Printing C code with the selected precision: 0 = double, 1 = float
+char *basic_str_ccode_precision(const basic s, int precision);
 //! Printing CUDA code
 char *basic_str_cudacode(const basic s);
-//! Printing CUDA float code
-char *basic_str_cudacode_float(const basic s);
+//! Printing CUDA code with the selected precision: 0 = double, 1 = float
+char *basic_str_cudacode_precision(const basic s, int precision);
 //! Printing JavaScript code
 char *basic_str_jscode(const basic s);
 //! Frees the string s
