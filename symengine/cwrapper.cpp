@@ -64,6 +64,7 @@ using SymEngine::get_mpq_t;
 using SymEngine::get_mpz_t;
 #endif
 using SymEngine::ccode;
+using SymEngine::ccode_precision;
 using SymEngine::CodePrinterPrecision;
 using SymEngine::cudacode;
 using SymEngine::diag;
@@ -709,7 +710,7 @@ char *basic_str_ccode_precision(const basic s, CodePrinterPrecision_C precision)
 {
     std::string str;
     try {
-        str = ccode(*s->m, to_code_printer_precision(precision));
+        str = ccode_precision(*s->m, to_code_printer_precision(precision));
     } catch (SymEngineException &e) {
         return nullptr;
     } catch (...) {

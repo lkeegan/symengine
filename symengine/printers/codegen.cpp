@@ -546,7 +546,12 @@ void JSCodePrinter::bvisit(const Min &x)
     str_ = s.str();
 }
 
-std::string ccode(const Basic &x, CodePrinterPrecision precision)
+std::string ccode(const Basic &x)
+{
+    return ccode_precision(x, CodePrinterPrecision::Double);
+}
+
+std::string ccode_precision(const Basic &x, CodePrinterPrecision precision)
 {
     C99CodePrinter c(precision);
     return c.apply(x);
