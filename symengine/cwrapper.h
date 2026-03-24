@@ -1,6 +1,7 @@
 #ifndef CWRAPPER_H
 #define CWRAPPER_H
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "symengine/symengine_config.h"
@@ -46,6 +47,17 @@ typedef enum {
     SYMENGINE_DOUBLE = 0,
     SYMENGINE_FLOAT = 1,
 } CodePrinterPrecision_C;
+
+//! Size-tagged settings for code printers. Append new fields only at the end.
+typedef struct {
+    uint32_t size;
+    uint32_t precision;
+} CodePrinterSettings_C;
+
+#define SYMENGINE_CODE_PRINTER_SETTINGS_INIT                                   \
+    {                                                                          \
+        sizeof(CodePrinterSettings_C), SYMENGINE_DOUBLE                        \
+    }
 
 //! Struct to hold the real and imaginary parts of std::complex<double>
 //! extracted from basic
@@ -393,14 +405,14 @@ char *basic_str_mathml(const basic s);
 char *basic_str_latex(const basic s);
 //! Printing C code
 char *basic_str_ccode(const basic s);
-//! Printing C code with the selected precision
-char *basic_str_ccode_precision(const basic s,
-                                CodePrinterPrecision_C precision);
+//! Printing C code with optional settings; NULL uses defaults
+char *basic_str_ccode_settings(const basic s,
+                               const CodePrinterSettings_C *settings);
 //! Printing CUDA code
 char *basic_str_cudacode(const basic s);
-//! Printing CUDA code with the selected precision
-char *basic_str_cudacode_precision(const basic s,
-                                   CodePrinterPrecision_C precision);
+//! Printing CUDA code with optional settings; NULL uses defaults
+char *basic_str_cudacode_settings(const basic s,
+                                  const CodePrinterSettings_C *settings);
 //! Printing JavaScript code
 char *basic_str_jscode(const basic s);
 //! Frees the string s

@@ -113,11 +113,26 @@ void test_cwrapper()
     SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123))") == 0);
     basic_str_free(s);
 
+    s = basic_str_ccode(e);
+    SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123))") == 0);
+    basic_str_free(s);
+
+    CodePrinterSettings_C float_settings = SYMENGINE_CODE_PRINTER_SETTINGS_INIT;
+    float_settings.precision = SYMENGINE_FLOAT;
+
+    s = basic_str_ccode_settings(e, &float_settings);
+    SYMENGINE_C_ASSERT(strcmp(s, "expf(sqrtf(123.0f))") == 0);
+    basic_str_free(s);
+
+    s = basic_str_cudacode_settings(e, NULL);
+    SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123.0))") == 0);
+    basic_str_free(s);
+
     s = basic_str_cudacode(e);
     SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123.0))") == 0);
     basic_str_free(s);
 
-    s = basic_str_cudacode_precision(e, SYMENGINE_FLOAT);
+    s = basic_str_cudacode_settings(e, &float_settings);
     SYMENGINE_C_ASSERT(strcmp(s, "expf(sqrtf(123.0f))") == 0);
     basic_str_free(s);
 

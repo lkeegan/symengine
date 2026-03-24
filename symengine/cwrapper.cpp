@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <cstddef>
 #include <cstring>
 
 #include <symengine/symbol.h>
@@ -64,8 +65,9 @@ using SymEngine::get_mpq_t;
 using SymEngine::get_mpz_t;
 #endif
 using SymEngine::ccode;
-using SymEngine::ccode_precision;
+using SymEngine::ccode_settings;
 using SymEngine::CodePrinterPrecision;
+using SymEngine::CodePrinterSettings;
 using SymEngine::cudacode;
 using SymEngine::diag;
 using SymEngine::eye;
@@ -95,6 +97,36 @@ static std::string _str(const Basic &a)
     return a.__str__();
 }
 } // namespace SymEngine
+
+namespace
+{
+
+SymEngine::CodePrinterPrecision to_code_printer_precision(uint32_t precision)
+{
+    switch (precision) {
+        case SYMENGINE_DOUBLE:
+            return SymEngine::CodePrinterPrecision::Double;
+        case SYMENGINE_FLOAT:
+            return SymEngine::CodePrinterPrecision::Float;
+        default:
+            throw SymEngine::SymEngineException(
+                "Unknown code printer precision");
+    }
+}
+
+SymEngine::CodePrinterSettings
+to_code_printer_settings(const CodePrinterSettings_C *settings)
+{
+    constexpr auto precision_field_end = static_cast<uint32_t>(
+        offsetof(CodePrinterSettings_C, precision) + sizeof(uint32_t));
+    SymEngine::CodePrinterSettings cpp_settings;
+    if (settings != nullptr && settings->size >= precision_field_end) {
+        cpp_settings.precision = to_code_printer_precision(settings->precision);
+    }
+    return cpp_settings;
+}
+
+} // namespace
 
 extern "C" {
 
@@ -689,28 +721,14 @@ IMPLEMENT_STR_CONVERSION(str_ccode, ccode)
 IMPLEMENT_STR_CONVERSION(str_cudacode, cudacode)
 IMPLEMENT_STR_CONVERSION(str_jscode, jscode)
 
-namespace
-{
-
-CodePrinterPrecision to_code_printer_precision(CodePrinterPrecision_C precision)
-{
-    switch (precision) {
-        case SYMENGINE_DOUBLE:
-            return CodePrinterPrecision::Double;
-        case SYMENGINE_FLOAT:
-            return CodePrinterPrecision::Float;
-        default:
-            throw SymEngineException("Unknown code printer precision");
-    }
-}
-
-} // namespace
-
-char *basic_str_ccode_precision(const basic s, CodePrinterPrecision_C precision)
+char *basic_str_ccode_settings(const basic s,
+                               const CodePrinterSettings_C *settings)
 {
     std::string str;
     try {
-        str = ccode_precision(*s->m, to_code_printer_precision(precision));
+        const auto cpp_settings = to_code_printer_settings(settings);
+        str = ccode_settings(*s->m,
+                             settings == nullptr ? nullptr : &cpp_settings);
     } catch (SymEngineException &e) {
         return nullptr;
     } catch (...) {
@@ -721,12 +739,13 @@ char *basic_str_ccode_precision(const basic s, CodePrinterPrecision_C precision)
     return cc;
 }
 
-char *basic_str_cudacode_precision(const basic s,
-                                   CodePrinterPrecision_C precision)
+char *basic_str_cudacode_settings(const basic s,
+                                  const CodePrinterSettings_C *settings)
 {
     std::string str;
     try {
-        str = cudacode(*s->m, to_code_printer_precision(precision));
+        const auto cpp_settings = to_code_printer_settings(settings);
+        str = cudacode(*s->m, settings == nullptr ? nullptr : &cpp_settings);
     } catch (SymEngineException &e) {
         return nullptr;
     } catch (...) {

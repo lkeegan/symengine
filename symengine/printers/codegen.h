@@ -1,6 +1,7 @@
 #ifndef SYMENGINE_CODEGEN_H
 #define SYMENGINE_CODEGEN_H
 
+#include <symengine/printers.h>
 #include <symengine/visitor.h>
 #include <symengine/printers/strprinter.h>
 #include <symengine/symengine_exception.h>
@@ -11,8 +12,7 @@ namespace SymEngine
 class CodePrinter : public BaseVisitor<CodePrinter, StrPrinter>
 {
 public:
-    explicit CodePrinter(CodePrinterPrecision precision
-                         = CodePrinterPrecision::Double);
+    explicit CodePrinter(const CodePrinterSettings *settings = nullptr);
     using StrPrinter::apply;
     using StrPrinter::bvisit;
     using StrPrinter::str_;
@@ -59,7 +59,7 @@ public:
 #endif
 
 protected:
-    CodePrinterPrecision precision_;
+    CodePrinterSettings settings_;
     std::string print_scalar_literal(double d) const;
     std::string print_math_function(const std::string &name) const;
 };
@@ -67,8 +67,7 @@ protected:
 class C89CodePrinter : public BaseVisitor<C89CodePrinter, CodePrinter>
 {
 public:
-    explicit C89CodePrinter(CodePrinterPrecision precision
-                            = CodePrinterPrecision::Double);
+    explicit C89CodePrinter(const CodePrinterSettings *settings = nullptr);
     using CodePrinter::apply;
     using CodePrinter::bvisit;
     using CodePrinter::str_;
@@ -80,8 +79,7 @@ public:
 class C99CodePrinter : public BaseVisitor<C99CodePrinter, C89CodePrinter>
 {
 public:
-    explicit C99CodePrinter(CodePrinterPrecision precision
-                            = CodePrinterPrecision::Double);
+    explicit C99CodePrinter(const CodePrinterSettings *settings = nullptr);
     using C89CodePrinter::apply;
     using C89CodePrinter::bvisit;
     using C89CodePrinter::str_;
@@ -95,8 +93,7 @@ public:
 class CudaCodePrinter : public BaseVisitor<CudaCodePrinter, C99CodePrinter>
 {
 public:
-    explicit CudaCodePrinter(CodePrinterPrecision precision
-                             = CodePrinterPrecision::Double);
+    explicit CudaCodePrinter(const CodePrinterSettings *settings = nullptr);
     using C99CodePrinter::apply;
     using C99CodePrinter::bvisit;
     using C99CodePrinter::str_;
