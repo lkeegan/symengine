@@ -33,6 +33,14 @@ extern "C" {
 
 typedef symengine_exceptions_t CWRAPPER_OUTPUT_TYPE;
 
+//! Precision for code printers (ccode, cudacode)
+typedef enum {
+    SYMENGINE_DOUBLE = 0,
+    SYMENGINE_FLOAT = 1,
+} BasicCodePrinterPrecision;
+//! Code printer settings object
+typedef struct BasicCodePrinterSettings BasicCodePrinterSettings;
+
 typedef enum {
 #define SYMENGINE_INCLUDE_ALL
 #define SYMENGINE_ENUM(type, Class) type,
@@ -41,23 +49,6 @@ typedef enum {
 #undef SYMENGINE_INCLUDE_ALL
     SYMENGINE_TypeID_Count
 } TypeID;
-
-//! Precision for code printers (ccode, cudacode)
-typedef enum {
-    SYMENGINE_DOUBLE = 0,
-    SYMENGINE_FLOAT = 1,
-} CodePrinterPrecision_C;
-
-//! Size-tagged settings for code printers. Append new fields only at the end.
-typedef struct {
-    uint32_t size;
-    uint32_t precision;
-} CodePrinterSettings_C;
-
-#define SYMENGINE_CODE_PRINTER_SETTINGS_INIT                                   \
-    {                                                                          \
-        sizeof(CodePrinterSettings_C), SYMENGINE_DOUBLE                        \
-    }
 
 //! Struct to hold the real and imaginary parts of std::complex<double>
 //! extracted from basic
@@ -394,6 +385,14 @@ char *basic_dumps(const basic s, unsigned long *size);
 //! Deserialize an expression
 CWRAPPER_OUTPUT_TYPE basic_loads(basic s, const char *c, unsigned long size);
 
+//! Return a struct for holding code printer settings
+BasicCodePrinterSettings *basic_code_printer_settings_new();
+//! Free a struct for holding code printer settings
+void basic_code_printer_settings_free(BasicCodePrinterSettings *self);
+//! Set the precision in the code printer settings
+void basic_code_printer_settings_set_precision(BasicCodePrinterSettings *self,
+                                               BasicCodePrinterPrecision prec);
+
 //! Returns a new char pointer to the string representation of s.
 char *basic_str(const basic s);
 //! Returns a new char pointer to the string representation of s.
@@ -407,12 +406,12 @@ char *basic_str_latex(const basic s);
 char *basic_str_ccode(const basic s);
 //! Printing C code with optional settings; NULL uses defaults
 char *basic_str_ccode_settings(const basic s,
-                               const CodePrinterSettings_C *settings);
+                               const BasicCodePrinterSettings *settings);
 //! Printing CUDA code
 char *basic_str_cudacode(const basic s);
 //! Printing CUDA code with optional settings; NULL uses defaults
 char *basic_str_cudacode_settings(const basic s,
-                                  const CodePrinterSettings_C *settings);
+                                  const BasicCodePrinterSettings *settings);
 //! Printing JavaScript code
 char *basic_str_jscode(const basic s);
 //! Frees the string s

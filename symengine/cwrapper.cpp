@@ -96,31 +96,22 @@ static std::string _str(const Basic &a)
 }
 } // namespace SymEngine
 
+extern "C" {
+struct BasicCodePrinterSettings {
+    SymEngine::CodePrinterPrecision precision;
+};
+}
+
 namespace
 {
 
-SymEngine::CodePrinterPrecision to_code_printer_precision(uint32_t precision)
-{
-    switch (precision) {
-        case SYMENGINE_DOUBLE:
-            return SymEngine::CodePrinterPrecision::Double;
-        case SYMENGINE_FLOAT:
-            return SymEngine::CodePrinterPrecision::Float;
-        default:
-            throw SymEngine::SymEngineException(
-                "Unknown code printer precision");
-    }
-}
-
 SymEngine::CodePrinterPrecision
-to_code_printer_precision(const CodePrinterSettings_C *settings)
+to_code_printer_precision(const BasicCodePrinterSettings *settings)
 {
-    constexpr auto precision_field_end = static_cast<uint32_t>(
-        offsetof(CodePrinterSettings_C, precision) + sizeof(uint32_t));
-    if (settings == nullptr || settings->size < precision_field_end) {
+    if (settings == nullptr) {
         return SymEngine::CodePrinterPrecision::Double;
     }
-    return to_code_printer_precision(settings->precision);
+    return settings->precision;
 }
 
 } // namespace
@@ -710,44 +701,47 @@ IMPLEMENT_TWO_ARG_FUNC(polygamma)
         return cc;                                                             \
     }
 
+#define IMPLEMENT_STR_CONVERSION_SETTINGS(name, func)                          \
+    char *basic_##name(const basic s,                                          \
+                       const BasicCodePrinterSettings *settings)               \
+    {                                                                          \
+        std::string str;                                                       \
+        try {                                                                  \
+            str = func(*s->m, to_code_printer_precision(settings));            \
+        } catch (SymEngineException & e) {                                     \
+            return nullptr;                                                    \
+        } catch (...) {                                                        \
+            return nullptr;                                                    \
+        }                                                                      \
+        auto cc = new char[str.length() + 1];                                  \
+        std::strcpy(cc, str.c_str());                                          \
+        return cc;                                                             \
+    }
+
 IMPLEMENT_STR_CONVERSION(str, _str)
 IMPLEMENT_STR_CONVERSION(str_julia, julia_str)
 IMPLEMENT_STR_CONVERSION(str_mathml, mathml)
 IMPLEMENT_STR_CONVERSION(str_latex, latex)
+IMPLEMENT_STR_CONVERSION(str_jscode, jscode)
 IMPLEMENT_STR_CONVERSION(str_ccode, ccode)
 IMPLEMENT_STR_CONVERSION(str_cudacode, cudacode)
-IMPLEMENT_STR_CONVERSION(str_jscode, jscode)
+IMPLEMENT_STR_CONVERSION_SETTINGS(str_ccode_settings, ccode)
+IMPLEMENT_STR_CONVERSION_SETTINGS(str_cudacode_settings, cudacode)
 
-char *basic_str_ccode_settings(const basic s,
-                               const CodePrinterSettings_C *settings)
+BasicCodePrinterSettings *basic_code_printer_settings_new()
 {
-    std::string str;
-    try {
-        str = ccode(*s->m, to_code_printer_precision(settings));
-    } catch (SymEngineException &e) {
-        return nullptr;
-    } catch (...) {
-        return nullptr;
-    }
-    auto cc = new char[str.length() + 1];
-    std::strcpy(cc, str.c_str());
-    return cc;
+    return new BasicCodePrinterSettings;
 }
 
-char *basic_str_cudacode_settings(const basic s,
-                                  const CodePrinterSettings_C *settings)
+void basic_code_printer_settings_free(BasicCodePrinterSettings *self)
 {
-    std::string str;
-    try {
-        str = cudacode(*s->m, to_code_printer_precision(settings));
-    } catch (SymEngineException &e) {
-        return nullptr;
-    } catch (...) {
-        return nullptr;
-    }
-    auto cc = new char[str.length() + 1];
-    std::strcpy(cc, str.c_str());
-    return cc;
+    delete self;
+}
+
+void basic_code_printer_settings_set_precision(BasicCodePrinterSettings *self,
+                                               BasicCodePrinterPrecision prec)
+{
+    self->precision = static_cast<SymEngine::CodePrinterPrecision>(prec);
 }
 
 void basic_str_free(char *s)
