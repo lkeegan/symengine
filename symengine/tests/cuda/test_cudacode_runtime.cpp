@@ -25,7 +25,6 @@ using SymEngine::boolFalse;
 using SymEngine::boolTrue;
 using SymEngine::cbrt;
 using SymEngine::CodePrinterPrecision;
-using SymEngine::CodePrinterSettings;
 using SymEngine::contains;
 using SymEngine::cudacode;
 using SymEngine::E;
@@ -313,16 +312,13 @@ TEST_CASE("CUDA code matches Lambda visitor", "[cuda][cudacode]")
     const std::vector<double> x_values = {1.2, 3.0, 7.0};
     const std::vector<double> y_values = {0.2, 0.5, 0.8};
     const std::vector<double> z_values = {1.2, 3.0, 7.0};
-    const CodePrinterSettings float_code_printer_settings(
-        CodePrinterPrecision::Float);
-
     for (const auto mode : {CudaScalarMode::Double, CudaScalarMode::Float}) {
         for (const auto &runtime_case : cases) {
             const std::string cuda_code
                 = mode == CudaScalarMode::Double
                       ? cudacode(*runtime_case.expr)
                       : cudacode(*runtime_case.expr,
-                                 &float_code_printer_settings);
+                                 CodePrinterPrecision::Float);
             DeviceKernel kernel = compile_kernel(
                 cuda_code, mode == CudaScalarMode::Double ? "double" : "float");
             for (double x_value : x_values) {

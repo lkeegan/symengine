@@ -1,5 +1,3 @@
-#include <cstddef>
-
 #include <symengine/printers/codegen.h>
 #include <symengine/printers.h>
 #include <symengine/symengine_exception.h>
@@ -27,31 +25,16 @@ normalize_code_printer_precision(CodePrinterPrecision precision)
     }
 }
 
-CodePrinterSettings
-get_code_printer_settings(const CodePrinterSettings *settings)
-{
-    CodePrinterSettings normalized_settings;
-    constexpr auto precision_field_end
-        = static_cast<std::uint32_t>(offsetof(CodePrinterSettings, precision)
-                                     + sizeof(CodePrinterPrecision));
-    if (settings == nullptr || settings->size < precision_field_end) {
-        return normalized_settings;
-    }
-    normalized_settings.precision
-        = normalize_code_printer_precision(settings->precision);
-    return normalized_settings;
-}
-
 } // namespace
 
-CodePrinter::CodePrinter(const CodePrinterSettings *settings)
-    : settings_{get_code_printer_settings(settings)}
+CodePrinter::CodePrinter(CodePrinterPrecision precision)
+    : precision_{normalize_code_printer_precision(precision)}
 {
 }
 
 std::string CodePrinter::print_scalar_literal(double d) const
 {
-    if (settings_.precision == CodePrinterPrecision::Float) {
+    if (precision_ == CodePrinterPrecision::Float) {
         return print_float_literal(d);
     }
     return print_double(d);
@@ -59,7 +42,7 @@ std::string CodePrinter::print_scalar_literal(double d) const
 
 std::string CodePrinter::print_math_function(const std::string &name) const
 {
-    if (settings_.precision == CodePrinterPrecision::Float) {
+    if (precision_ == CodePrinterPrecision::Float) {
         return name + "f";
     }
     return name;
@@ -143,7 +126,7 @@ void CodePrinter::bvisit(const BooleanAtom &x)
 }
 void CodePrinter::bvisit(const Integer &x)
 {
-    if (settings_.precision == CodePrinterPrecision::Float) {
+    if (precision_ == CodePrinterPrecision::Float) {
         str_ = print_scalar_literal(mp_get_d(x.as_integer_class()));
     } else {
         StrPrinter::bvisit(x);
@@ -294,12 +277,12 @@ void CodePrinter::bvisit(const Min &x)
 void CodePrinter::bvisit(const Constant &x)
 {
     if (eq(x, *E)) {
-        str_ = settings_.precision == CodePrinterPrecision::Float
+        str_ = precision_ == CodePrinterPrecision::Float
                    ? print_math_function("exp") + "("
                          + print_scalar_literal(1.0) + ")"
                    : "exp(1)";
     } else if (eq(x, *pi)) {
-        str_ = settings_.precision == CodePrinterPrecision::Float
+        str_ = precision_ == CodePrinterPrecision::Float
                    ? print_math_function("acos") + "("
                          + print_scalar_literal(-1.0) + ")"
                    : "acos(-1)";
@@ -381,7 +364,7 @@ void CodePrinter::bvisit(const Function &x)
 
 void CodePrinter::bvisit(const RealDouble &x)
 {
-    if (settings_.precision == CodePrinterPrecision::Float) {
+    if (precision_ == CodePrinterPrecision::Float) {
         str_ = print_scalar_literal(x.i);
     } else {
         StrPrinter::bvisit(x);
@@ -392,14 +375,14 @@ void CodePrinter::bvisit(const RealDouble &x)
 void CodePrinter::bvisit(const RealMPFR &x)
 {
     StrPrinter::bvisit(x);
-    if (settings_.precision == CodePrinterPrecision::Float) {
+    if (precision_ == CodePrinterPrecision::Float) {
         str_ += "f";
     }
 }
 #endif
 
-C89CodePrinter::C89CodePrinter(const CodePrinterSettings *settings)
-    : BaseVisitor<C89CodePrinter, CodePrinter>(settings)
+C89CodePrinter::C89CodePrinter(CodePrinterPrecision precision)
+    : BaseVisitor<C89CodePrinter, CodePrinter>(precision)
 {
 }
 
@@ -428,8 +411,8 @@ void C89CodePrinter::_print_pow(std::ostringstream &o,
     }
 }
 
-C99CodePrinter::C99CodePrinter(const CodePrinterSettings *settings)
-    : BaseVisitor<C99CodePrinter, C89CodePrinter>(settings)
+C99CodePrinter::C99CodePrinter(CodePrinterPrecision precision)
+    : BaseVisitor<C99CodePrinter, C89CodePrinter>(precision)
 {
 }
 
@@ -472,8 +455,8 @@ void C99CodePrinter::bvisit(const LogGamma &x)
     str_ = s.str();
 }
 
-CudaCodePrinter::CudaCodePrinter(const CodePrinterSettings *settings)
-    : BaseVisitor<CudaCodePrinter, C99CodePrinter>(settings)
+CudaCodePrinter::CudaCodePrinter(CodePrinterPrecision precision)
+    : BaseVisitor<CudaCodePrinter, C99CodePrinter>(precision)
 {
 }
 
@@ -496,20 +479,18 @@ void CudaCodePrinter::bvisit(const Constant &x)
 
 void CudaCodePrinter::bvisit(const NaN &x)
 {
-    str_ = settings_.precision == CodePrinterPrecision::Float ? "CUDART_NAN_F"
-                                                              : "CUDART_NAN";
+    str_ = precision_ == CodePrinterPrecision::Float ? "CUDART_NAN_F"
+                                                     : "CUDART_NAN";
 }
 
 void CudaCodePrinter::bvisit(const Infty &x)
 {
     if (x.is_negative_infinity())
-        str_ = settings_.precision == CodePrinterPrecision::Float
-                   ? "-CUDART_INF_F"
-                   : "-CUDART_INF";
+        str_ = precision_ == CodePrinterPrecision::Float ? "-CUDART_INF_F"
+                                                         : "-CUDART_INF";
     else if (x.is_positive_infinity())
-        str_ = settings_.precision == CodePrinterPrecision::Float
-                   ? "CUDART_INF_F"
-                   : "CUDART_INF";
+        str_ = precision_ == CodePrinterPrecision::Float ? "CUDART_INF_F"
+                                                         : "CUDART_INF";
     else
         throw SymEngineException("Not supported");
 }
@@ -578,20 +559,15 @@ void JSCodePrinter::bvisit(const Min &x)
     str_ = s.str();
 }
 
-std::string ccode(const Basic &x)
+std::string ccode(const Basic &x, CodePrinterPrecision precision)
 {
-    return ccode_settings(x);
-}
-
-std::string ccode_settings(const Basic &x, const CodePrinterSettings *settings)
-{
-    C99CodePrinter c(settings);
+    C99CodePrinter c(precision);
     return c.apply(x);
 }
 
-std::string cudacode(const Basic &x, const CodePrinterSettings *settings)
+std::string cudacode(const Basic &x, CodePrinterPrecision precision)
 {
-    CudaCodePrinter p(settings);
+    CudaCodePrinter p(precision);
     return p.apply(x);
 }
 

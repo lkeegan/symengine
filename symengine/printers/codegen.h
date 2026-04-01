@@ -12,7 +12,8 @@ namespace SymEngine
 class CodePrinter : public BaseVisitor<CodePrinter, StrPrinter>
 {
 public:
-    explicit CodePrinter(const CodePrinterSettings *settings = nullptr);
+    explicit CodePrinter(CodePrinterPrecision precision
+                         = CodePrinterPrecision::Double);
     using StrPrinter::apply;
     using StrPrinter::bvisit;
     using StrPrinter::str_;
@@ -59,7 +60,7 @@ public:
 #endif
 
 protected:
-    CodePrinterSettings settings_;
+    CodePrinterPrecision precision_;
     std::string print_scalar_literal(double d) const;
     std::string print_math_function(const std::string &name) const;
 };
@@ -67,7 +68,8 @@ protected:
 class C89CodePrinter : public BaseVisitor<C89CodePrinter, CodePrinter>
 {
 public:
-    explicit C89CodePrinter(const CodePrinterSettings *settings = nullptr);
+    explicit C89CodePrinter(CodePrinterPrecision precision
+                            = CodePrinterPrecision::Double);
     using CodePrinter::apply;
     using CodePrinter::bvisit;
     using CodePrinter::str_;
@@ -79,7 +81,8 @@ public:
 class C99CodePrinter : public BaseVisitor<C99CodePrinter, C89CodePrinter>
 {
 public:
-    explicit C99CodePrinter(const CodePrinterSettings *settings = nullptr);
+    explicit C99CodePrinter(CodePrinterPrecision precision
+                            = CodePrinterPrecision::Double);
     using C89CodePrinter::apply;
     using C89CodePrinter::bvisit;
     using C89CodePrinter::str_;
@@ -93,7 +96,8 @@ public:
 class CudaCodePrinter : public BaseVisitor<CudaCodePrinter, C99CodePrinter>
 {
 public:
-    explicit CudaCodePrinter(const CodePrinterSettings *settings = nullptr);
+    explicit CudaCodePrinter(CodePrinterPrecision precision
+                             = CodePrinterPrecision::Double);
     using C99CodePrinter::apply;
     using C99CodePrinter::bvisit;
     using C99CodePrinter::str_;

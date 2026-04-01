@@ -65,9 +65,7 @@ using SymEngine::get_mpq_t;
 using SymEngine::get_mpz_t;
 #endif
 using SymEngine::ccode;
-using SymEngine::ccode_settings;
 using SymEngine::CodePrinterPrecision;
-using SymEngine::CodePrinterSettings;
 using SymEngine::cudacode;
 using SymEngine::diag;
 using SymEngine::eye;
@@ -114,16 +112,15 @@ SymEngine::CodePrinterPrecision to_code_printer_precision(uint32_t precision)
     }
 }
 
-SymEngine::CodePrinterSettings
-to_code_printer_settings(const CodePrinterSettings_C *settings)
+SymEngine::CodePrinterPrecision
+to_code_printer_precision(const CodePrinterSettings_C *settings)
 {
     constexpr auto precision_field_end = static_cast<uint32_t>(
         offsetof(CodePrinterSettings_C, precision) + sizeof(uint32_t));
-    SymEngine::CodePrinterSettings cpp_settings;
-    if (settings != nullptr && settings->size >= precision_field_end) {
-        cpp_settings.precision = to_code_printer_precision(settings->precision);
+    if (settings == nullptr || settings->size < precision_field_end) {
+        return SymEngine::CodePrinterPrecision::Double;
     }
-    return cpp_settings;
+    return to_code_printer_precision(settings->precision);
 }
 
 } // namespace
@@ -726,9 +723,7 @@ char *basic_str_ccode_settings(const basic s,
 {
     std::string str;
     try {
-        const auto cpp_settings = to_code_printer_settings(settings);
-        str = ccode_settings(*s->m,
-                             settings == nullptr ? nullptr : &cpp_settings);
+        str = ccode(*s->m, to_code_printer_precision(settings));
     } catch (SymEngineException &e) {
         return nullptr;
     } catch (...) {
@@ -744,8 +739,7 @@ char *basic_str_cudacode_settings(const basic s,
 {
     std::string str;
     try {
-        const auto cpp_settings = to_code_printer_settings(settings);
-        str = cudacode(*s->m, settings == nullptr ? nullptr : &cpp_settings);
+        str = cudacode(*s->m, to_code_printer_precision(settings));
     } catch (SymEngineException &e) {
         return nullptr;
     } catch (...) {
