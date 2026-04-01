@@ -113,6 +113,30 @@ void test_cwrapper()
     SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123))") == 0);
     basic_str_free(s);
 
+    s = basic_str_ccode(e);
+    SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123))") == 0);
+    basic_str_free(s);
+
+    BasicCodePrinterSettings *float_settings
+        = basic_code_printer_settings_new();
+    basic_code_printer_settings_set_precision(float_settings, SYMENGINE_FLOAT);
+
+    s = basic_str_ccode_settings(e, float_settings);
+    SYMENGINE_C_ASSERT(strcmp(s, "expf(sqrtf(123.0f))") == 0);
+    basic_str_free(s);
+
+    s = basic_str_cudacode_settings(e, NULL);
+    SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123.0))") == 0);
+    basic_str_free(s);
+
+    s = basic_str_cudacode(e);
+    SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123.0))") == 0);
+    basic_str_free(s);
+
+    s = basic_str_cudacode_settings(e, float_settings);
+    SYMENGINE_C_ASSERT(strcmp(s, "expf(sqrtf(123.0f))") == 0);
+    basic_str_free(s);
+
 #if HAVE_SYMENGINE_RTTI
     unsigned long size = 0;
     basic deserialized;
@@ -205,6 +229,7 @@ void test_cwrapper()
     basic_free_stack(numer);
     basic_free_stack(denom);
     basic_str_free(s);
+    basic_code_printer_settings_free(float_settings);
 }
 
 void test_as_two_terms()

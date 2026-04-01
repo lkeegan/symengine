@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <cstddef>
 #include <cstring>
 
 #include <symengine/symbol.h>
@@ -64,6 +65,8 @@ using SymEngine::get_mpq_t;
 using SymEngine::get_mpz_t;
 #endif
 using SymEngine::ccode;
+using SymEngine::CodePrinterPrecision;
+using SymEngine::cudacode;
 using SymEngine::diag;
 using SymEngine::eye;
 using SymEngine::jscode;
@@ -92,6 +95,26 @@ static std::string _str(const Basic &a)
     return a.__str__();
 }
 } // namespace SymEngine
+
+extern "C" {
+struct BasicCodePrinterSettings {
+    SymEngine::CodePrinterPrecision precision;
+};
+}
+
+namespace
+{
+
+SymEngine::CodePrinterPrecision
+to_code_printer_precision(const BasicCodePrinterSettings *settings)
+{
+    if (settings == nullptr) {
+        return SymEngine::CodePrinterPrecision::Double;
+    }
+    return settings->precision;
+}
+
+} // namespace
 
 extern "C" {
 
@@ -678,12 +701,48 @@ IMPLEMENT_TWO_ARG_FUNC(polygamma)
         return cc;                                                             \
     }
 
+#define IMPLEMENT_STR_CONVERSION_SETTINGS(name, func)                          \
+    char *basic_##name(const basic s,                                          \
+                       const BasicCodePrinterSettings *settings)               \
+    {                                                                          \
+        std::string str;                                                       \
+        try {                                                                  \
+            str = func(*s->m, to_code_printer_precision(settings));            \
+        } catch (SymEngineException & e) {                                     \
+            return nullptr;                                                    \
+        } catch (...) {                                                        \
+            return nullptr;                                                    \
+        }                                                                      \
+        auto cc = new char[str.length() + 1];                                  \
+        std::strcpy(cc, str.c_str());                                          \
+        return cc;                                                             \
+    }
+
 IMPLEMENT_STR_CONVERSION(str, _str)
 IMPLEMENT_STR_CONVERSION(str_julia, julia_str)
 IMPLEMENT_STR_CONVERSION(str_mathml, mathml)
 IMPLEMENT_STR_CONVERSION(str_latex, latex)
-IMPLEMENT_STR_CONVERSION(str_ccode, ccode)
 IMPLEMENT_STR_CONVERSION(str_jscode, jscode)
+IMPLEMENT_STR_CONVERSION(str_ccode, ccode)
+IMPLEMENT_STR_CONVERSION(str_cudacode, cudacode)
+IMPLEMENT_STR_CONVERSION_SETTINGS(str_ccode_settings, ccode)
+IMPLEMENT_STR_CONVERSION_SETTINGS(str_cudacode_settings, cudacode)
+
+BasicCodePrinterSettings *basic_code_printer_settings_new()
+{
+    return new BasicCodePrinterSettings;
+}
+
+void basic_code_printer_settings_free(BasicCodePrinterSettings *self)
+{
+    delete self;
+}
+
+void basic_code_printer_settings_set_precision(BasicCodePrinterSettings *self,
+                                               BasicCodePrinterPrecision prec)
+{
+    self->precision = static_cast<SymEngine::CodePrinterPrecision>(prec);
+}
 
 void basic_str_free(char *s)
 {
