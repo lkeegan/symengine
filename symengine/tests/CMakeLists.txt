@@ -17,3 +17,7 @@ add_subdirectory(finitediff)
 if (BUILD_CUDA_TESTS)
     add_subdirectory(cuda)
 endif()
+
+if (BUILD_METAL_TESTS)
+    add_subdirectory(metal)
+endif()

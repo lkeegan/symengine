@@ -107,6 +107,27 @@ public:
     void bvisit(const Infty &x);
 };
 
+class MetalCodePrinter : public BaseVisitor<MetalCodePrinter, CodePrinter>
+{
+public:
+    explicit MetalCodePrinter(CodePrinterPrecision precision
+                              = CodePrinterPrecision::Float);
+    using CodePrinter::apply;
+    using CodePrinter::bvisit;
+    using CodePrinter::str_;
+    void bvisit(const Constant &x);
+    void bvisit(const NaN &x);
+    void bvisit(const Infty &x);
+    void bvisit(const Abs &x);
+    void bvisit(const Ceiling &x);
+    void bvisit(const Truncate &x);
+    void bvisit(const Max &x);
+    void bvisit(const Min &x);
+    void bvisit(const Function &x);
+    void _print_pow(std::ostringstream &o, const RCP<const Basic> &a,
+                    const RCP<const Basic> &b) override;
+};
+
 class JSCodePrinter : public BaseVisitor<JSCodePrinter, CodePrinter>
 {
 public:

@@ -33,10 +33,11 @@ extern "C" {
 
 typedef symengine_exceptions_t CWRAPPER_OUTPUT_TYPE;
 
-//! Precision for code printers (ccode, cudacode)
+//! Precision for code printers (ccode, cudacode, metalcode)
 typedef enum {
     SYMENGINE_DOUBLE = 0,
     SYMENGINE_FLOAT = 1,
+    SYMENGINE_HALF = 2,
 } BasicCodePrinterPrecision;
 //! Code printer settings object
 typedef struct BasicCodePrinterSettings BasicCodePrinterSettings;
@@ -412,6 +413,11 @@ char *basic_str_cudacode(const basic s);
 //! Printing CUDA code with optional settings; NULL uses defaults
 char *basic_str_cudacode_settings(const basic s,
                                   const BasicCodePrinterSettings *settings);
+//! Printing Metal code
+char *basic_str_metalcode(const basic s);
+//! Printing Metal code with optional settings; NULL uses float defaults
+char *basic_str_metalcode_settings(const basic s,
+                                   const BasicCodePrinterSettings *settings);
 //! Printing JavaScript code
 char *basic_str_jscode(const basic s);
 //! Frees the string s

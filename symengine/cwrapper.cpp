@@ -73,6 +73,7 @@ using SymEngine::jscode;
 using SymEngine::julia_str;
 using SymEngine::latex;
 using SymEngine::mathml;
+using SymEngine::metalcode;
 using SymEngine::mp_get_si;
 using SymEngine::mp_get_ui;
 using SymEngine::numeric_cast;
@@ -707,7 +708,9 @@ IMPLEMENT_TWO_ARG_FUNC(polygamma)
     {                                                                          \
         std::string str;                                                       \
         try {                                                                  \
-            str = func(*s->m, to_code_printer_precision(settings));            \
+            str = settings == nullptr                                          \
+                      ? func(*s->m)                                            \
+                      : func(*s->m, to_code_printer_precision(settings));      \
         } catch (SymEngineException & e) {                                     \
             return nullptr;                                                    \
         } catch (...) {                                                        \
@@ -725,8 +728,10 @@ IMPLEMENT_STR_CONVERSION(str_latex, latex)
 IMPLEMENT_STR_CONVERSION(str_jscode, jscode)
 IMPLEMENT_STR_CONVERSION(str_ccode, ccode)
 IMPLEMENT_STR_CONVERSION(str_cudacode, cudacode)
+IMPLEMENT_STR_CONVERSION(str_metalcode, metalcode)
 IMPLEMENT_STR_CONVERSION_SETTINGS(str_ccode_settings, ccode)
 IMPLEMENT_STR_CONVERSION_SETTINGS(str_cudacode_settings, cudacode)
+IMPLEMENT_STR_CONVERSION_SETTINGS(str_metalcode_settings, metalcode)
 
 BasicCodePrinterSettings *basic_code_printer_settings_new()
 {

@@ -8,7 +8,11 @@
 
 namespace SymEngine
 {
-enum class CodePrinterPrecision : std::uint32_t { Double = 0, Float = 1 };
+enum class CodePrinterPrecision : std::uint32_t {
+    Double = 0,
+    Float = 1,
+    Half = 2
+};
 
 std::string str(const Basic &x);
 std::string str(const DenseMatrix &x);
@@ -27,6 +31,8 @@ std::string ccode(const Basic &x, CodePrinterPrecision precision
                                   = CodePrinterPrecision::Double);
 std::string cudacode(const Basic &x, CodePrinterPrecision precision
                                      = CodePrinterPrecision::Double);
+std::string metalcode(const Basic &x, CodePrinterPrecision precision
+                                      = CodePrinterPrecision::Float);
 std::string c89code(const Basic &x);
 std::string c99code(const Basic &x);
 std::string jscode(const Basic &x);

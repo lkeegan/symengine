@@ -124,6 +124,7 @@ their default values are indicated below:
                                                         the vendored copy
         -DBUILD_TESTS:BOOL=ON \                       # Build with tests
         -DBUILD_CUDA_TESTS:BOOL=OFF \                 # Build with cuda tests (requires cuda and an nvidia GPU)
+        -DBUILD_METAL_TESTS:BOOL=OFF \                # Build with metal tests (requires macOS, Metal, and metal-cpp headers)
         -DBUILD_BENCHMARKS:BOOL=ON \                  # Build with benchmarks
         -DBUILD_BENCHMARKS_GOOGLE:BOOL=OFF \          # Build with Google Benchmark benchmarks
         -DINTEGER_CLASS:STRING=gmp \                  # Choose storage type for Integer. one of gmp, gmpxx,

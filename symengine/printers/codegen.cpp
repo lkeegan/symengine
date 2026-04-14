@@ -8,9 +8,18 @@ namespace SymEngine
 namespace
 {
 
-std::string print_float_literal(double d)
+const char *print_precision_suffix(CodePrinterPrecision precision)
 {
-    return print_double(d) + "f";
+    switch (precision) {
+        case CodePrinterPrecision::Double:
+            return "";
+        case CodePrinterPrecision::Float:
+            return "f";
+        case CodePrinterPrecision::Half:
+            return "h";
+        default:
+            throw SymEngineException("Unknown code printer precision");
+    }
 }
 
 CodePrinterPrecision
@@ -19,6 +28,7 @@ normalize_code_printer_precision(CodePrinterPrecision precision)
     switch (precision) {
         case CodePrinterPrecision::Double:
         case CodePrinterPrecision::Float:
+        case CodePrinterPrecision::Half:
             return precision;
         default:
             throw SymEngineException("Unknown code printer precision");
@@ -34,10 +44,7 @@ CodePrinter::CodePrinter(CodePrinterPrecision precision)
 
 std::string CodePrinter::print_scalar_literal(double d) const
 {
-    if (precision_ == CodePrinterPrecision::Float) {
-        return print_float_literal(d);
-    }
-    return print_double(d);
+    return print_double(d) + print_precision_suffix(precision_);
 }
 
 std::string CodePrinter::print_math_function(const std::string &name) const
@@ -126,7 +133,7 @@ void CodePrinter::bvisit(const BooleanAtom &x)
 }
 void CodePrinter::bvisit(const Integer &x)
 {
-    if (precision_ == CodePrinterPrecision::Float) {
+    if (precision_ != CodePrinterPrecision::Double) {
         str_ = print_scalar_literal(mp_get_d(x.as_integer_class()));
     } else {
         StrPrinter::bvisit(x);
@@ -277,12 +284,12 @@ void CodePrinter::bvisit(const Min &x)
 void CodePrinter::bvisit(const Constant &x)
 {
     if (eq(x, *E)) {
-        str_ = precision_ == CodePrinterPrecision::Float
+        str_ = precision_ != CodePrinterPrecision::Double
                    ? print_math_function("exp") + "("
                          + print_scalar_literal(1.0) + ")"
                    : "exp(1)";
     } else if (eq(x, *pi)) {
-        str_ = precision_ == CodePrinterPrecision::Float
+        str_ = precision_ != CodePrinterPrecision::Double
                    ? print_math_function("acos") + "("
                          + print_scalar_literal(-1.0) + ")"
                    : "acos(-1)";
@@ -364,7 +371,7 @@ void CodePrinter::bvisit(const Function &x)
 
 void CodePrinter::bvisit(const RealDouble &x)
 {
-    if (precision_ == CodePrinterPrecision::Float) {
+    if (precision_ != CodePrinterPrecision::Double) {
         str_ = print_scalar_literal(x.i);
     } else {
         StrPrinter::bvisit(x);
@@ -375,8 +382,8 @@ void CodePrinter::bvisit(const RealDouble &x)
 void CodePrinter::bvisit(const RealMPFR &x)
 {
     StrPrinter::bvisit(x);
-    if (precision_ == CodePrinterPrecision::Float) {
-        str_ += "f";
+    if (precision_ != CodePrinterPrecision::Double) {
+        str_ += print_precision_suffix(precision_);
     }
 }
 #endif
@@ -384,6 +391,10 @@ void CodePrinter::bvisit(const RealMPFR &x)
 C89CodePrinter::C89CodePrinter(CodePrinterPrecision precision)
     : BaseVisitor<C89CodePrinter, CodePrinter>(precision)
 {
+    if (precision_ == CodePrinterPrecision::Half) {
+        throw SymEngineException(
+            "C-family code printers do not support half precision");
+    }
 }
 
 void C89CodePrinter::bvisit(const Infty &x)
@@ -495,6 +506,135 @@ void CudaCodePrinter::bvisit(const Infty &x)
         throw SymEngineException("Not supported");
 }
 
+MetalCodePrinter::MetalCodePrinter(CodePrinterPrecision precision)
+    : BaseVisitor<MetalCodePrinter, CodePrinter>(precision)
+{
+    if (precision_ == CodePrinterPrecision::Double) {
+        throw SymEngineException(
+            "Metal code printer currently only supports float and half "
+            "precision");
+    }
+}
+
+void MetalCodePrinter::bvisit(const Constant &x)
+{
+    if (eq(x, *E)) {
+        str_ = "exp(" + print_scalar_literal(1.0) + ")";
+    } else if (eq(x, *pi)) {
+        str_ = "acos(" + print_scalar_literal(-1.0) + ")";
+    } else {
+        str_ = x.get_name();
+    }
+}
+
+void MetalCodePrinter::bvisit(const NaN &x)
+{
+    if (precision_ == CodePrinterPrecision::Half) {
+        str_ = "half(NAN)";
+    } else {
+        str_ = "NAN";
+    }
+}
+
+void MetalCodePrinter::bvisit(const Infty &x)
+{
+    if (x.is_negative_infinity()) {
+        str_ = precision_ == CodePrinterPrecision::Half ? "-HUGE_VALH"
+                                                        : "-INFINITY";
+    } else if (x.is_positive_infinity()) {
+        str_ = precision_ == CodePrinterPrecision::Half ? "HUGE_VALH"
+                                                        : "INFINITY";
+    } else {
+        throw SymEngineException("Not supported");
+    }
+}
+
+void MetalCodePrinter::bvisit(const Abs &x)
+{
+    std::ostringstream s;
+    s << "fabs(" << apply(x.get_arg()) << ")";
+    str_ = s.str();
+}
+
+void MetalCodePrinter::bvisit(const Ceiling &x)
+{
+    std::ostringstream s;
+    s << "ceil(" << apply(x.get_arg()) << ")";
+    str_ = s.str();
+}
+
+void MetalCodePrinter::bvisit(const Truncate &x)
+{
+    std::ostringstream s;
+    s << "trunc(" << apply(x.get_arg()) << ")";
+    str_ = s.str();
+}
+
+void MetalCodePrinter::bvisit(const Max &x)
+{
+    std::ostringstream s;
+    const auto &args = x.get_args();
+    switch (args.size()) {
+        case 0:
+        case 1:
+            throw SymEngineException("Impossible");
+        case 2:
+            s << "fmax(" << apply(args[0]) << ", " << apply(args[1]) << ")";
+            break;
+        default: {
+            vec_basic inner_args(args.begin() + 1, args.end());
+            auto inner = max(inner_args);
+            s << "fmax(" << apply(args[0]) << ", " << apply(inner) << ")";
+            break;
+        }
+    }
+    str_ = s.str();
+}
+
+void MetalCodePrinter::bvisit(const Min &x)
+{
+    std::ostringstream s;
+    const auto &args = x.get_args();
+    switch (args.size()) {
+        case 0:
+        case 1:
+            throw SymEngineException("Impossible");
+        case 2:
+            s << "fmin(" << apply(args[0]) << ", " << apply(args[1]) << ")";
+            break;
+        default: {
+            vec_basic inner_args(args.begin() + 1, args.end());
+            auto inner = min(inner_args);
+            s << "fmin(" << apply(args[0]) << ", " << apply(inner) << ")";
+            break;
+        }
+    }
+    str_ = s.str();
+}
+
+void MetalCodePrinter::bvisit(const Function &x)
+{
+    static const std::vector<std::string> names_ = init_str_printer_names();
+    std::ostringstream o;
+    o << names_[x.get_type_code()];
+    vec_basic vec = x.get_args();
+    o << parenthesize(apply(vec));
+    str_ = o.str();
+}
+
+void MetalCodePrinter::_print_pow(std::ostringstream &o,
+                                  const RCP<const Basic> &a,
+                                  const RCP<const Basic> &b)
+{
+    if (eq(*a, *E)) {
+        o << "exp(" << apply(b) << ")";
+    } else if (eq(*b, *rational(1, 2))) {
+        o << "sqrt(" << apply(a) << ")";
+    } else {
+        o << "pow(" << apply(a) << ", " << apply(b) << ")";
+    }
+}
+
 void JSCodePrinter::bvisit(const Constant &x)
 {
     if (eq(x, *E)) {
@@ -568,6 +708,12 @@ std::string ccode(const Basic &x, CodePrinterPrecision precision)
 std::string cudacode(const Basic &x, CodePrinterPrecision precision)
 {
     CudaCodePrinter p(precision);
+    return p.apply(x);
+}
+
+std::string metalcode(const Basic &x, CodePrinterPrecision precision)
+{
+    MetalCodePrinter p(precision);
     return p.apply(x);
 }
 
