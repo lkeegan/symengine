@@ -164,9 +164,9 @@ TEST_CASE("Metal code generation", "[metalcode]")
     REQUIRE(metalcode(*max({x, y, z})) == "fmax(x, fmax(y, z))");
     REQUIRE(metalcode(*min({x, y, z})) == "fmin(x, fmin(y, z))");
     REQUIRE(metalcode(*max({a, b, c, x, y, z}))
-            == "fmax(a, fmax(b, fmax(c, fmax(x, fmax(y, z)))))");
+            == "fmax(fmax(a, fmax(b, c)), fmax(x, fmax(y, z)))");
     REQUIRE(metalcode(*min({a, b, c, x, y, z}))
-            == "fmin(a, fmin(b, fmin(c, fmin(x, fmin(y, z)))))");
+            == "fmin(fmin(a, fmin(b, c)), fmin(x, fmin(y, z)))");
     REQUIRE(metalcode(*piecewise_expr)
             == "((x <= 2.0f) ? (\n   x\n)\n: ((x > 2.0f && x <= 5.0f) ? (\n   "
                "y\n)\n: (\n   x + y\n)))");
@@ -388,12 +388,12 @@ TEST_CASE("Functions", "[ccode][cudacode]")
     REQUIRE(cudacode(*p, CodePrinterPrecision::Float)
             == "fmaxf(x, fmaxf(y, z))");
     p = max({a, b, c, x, y, z});
-    REQUIRE(ccode(*p) == "fmax(a, fmax(b, fmax(c, fmax(x, fmax(y, z)))))");
+    REQUIRE(ccode(*p) == "fmax(fmax(a, fmax(b, c)), fmax(x, fmax(y, z)))");
     REQUIRE(ccode(*p, CodePrinterPrecision::Float)
-            == "fmaxf(a, fmaxf(b, fmaxf(c, fmaxf(x, fmaxf(y, z)))))");
-    REQUIRE(cudacode(*p) == "fmax(a, fmax(b, fmax(c, fmax(x, fmax(y, z)))))");
+            == "fmaxf(fmaxf(a, fmaxf(b, c)), fmaxf(x, fmaxf(y, z)))");
+    REQUIRE(cudacode(*p) == "fmax(fmax(a, fmax(b, c)), fmax(x, fmax(y, z)))");
     REQUIRE(cudacode(*p, CodePrinterPrecision::Float)
-            == "fmaxf(a, fmaxf(b, fmaxf(c, fmaxf(x, fmaxf(y, z)))))");
+            == "fmaxf(fmaxf(a, fmaxf(b, c)), fmaxf(x, fmaxf(y, z)))");
     p = min({x, y, z});
     REQUIRE(ccode(*p) == "fmin(x, fmin(y, z))");
     REQUIRE(ccode(*p, CodePrinterPrecision::Float) == "fminf(x, fminf(y, z))");
@@ -401,12 +401,12 @@ TEST_CASE("Functions", "[ccode][cudacode]")
     REQUIRE(cudacode(*p, CodePrinterPrecision::Float)
             == "fminf(x, fminf(y, z))");
     p = min({a, b, c, x, y, z});
-    REQUIRE(ccode(*p) == "fmin(a, fmin(b, fmin(c, fmin(x, fmin(y, z)))))");
+    REQUIRE(ccode(*p) == "fmin(fmin(a, fmin(b, c)), fmin(x, fmin(y, z)))");
     REQUIRE(ccode(*p, CodePrinterPrecision::Float)
-            == "fminf(a, fminf(b, fminf(c, fminf(x, fminf(y, z)))))");
-    REQUIRE(cudacode(*p) == "fmin(a, fmin(b, fmin(c, fmin(x, fmin(y, z)))))");
+            == "fminf(fminf(a, fminf(b, c)), fminf(x, fminf(y, z)))");
+    REQUIRE(cudacode(*p) == "fmin(fmin(a, fmin(b, c)), fmin(x, fmin(y, z)))");
     REQUIRE(cudacode(*p, CodePrinterPrecision::Float)
-            == "fminf(a, fminf(b, fminf(c, fminf(x, fminf(y, z)))))");
+            == "fminf(fminf(a, fminf(b, c)), fminf(x, fminf(y, z)))");
 }
 
 TEST_CASE("Configurable precision", "[ccode][cudacode]")

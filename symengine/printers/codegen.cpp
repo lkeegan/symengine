@@ -62,13 +62,24 @@ std::string CodePrinter::print_binary_reduction(const vec_basic &args,
         throw SymEngineException("Impossible");
     }
 
-    std::string result = apply(args.back());
-    for (auto it = args.rbegin() + 1; it != args.rend(); ++it) {
-        std::ostringstream s;
-        s << func_name << "(" << apply(*it) << ", " << result << ")";
-        result = s.str();
+    return print_binary_reduction_impl(args.begin(), args.end(), func_name);
+}
+
+std::string
+CodePrinter::print_binary_reduction_impl(vec_basic::const_iterator begin,
+                                         vec_basic::const_iterator end,
+                                         const std::string &func_name)
+{
+    const auto size = static_cast<std::size_t>(std::distance(begin, end));
+    if (size == 1) {
+        return apply(*begin);
     }
-    return result;
+
+    const auto mid = begin + size / 2;
+    std::ostringstream s;
+    s << func_name << "(" << print_binary_reduction_impl(begin, mid, func_name)
+      << ", " << print_binary_reduction_impl(mid, end, func_name) << ")";
+    return s.str();
 }
 
 void CodePrinter::bvisit(const Basic &x)

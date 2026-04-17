@@ -65,6 +65,9 @@ protected:
     std::string print_math_function(const std::string &name) const;
     std::string print_binary_reduction(const vec_basic &args,
                                        const std::string &func_name);
+    std::string print_binary_reduction_impl(vec_basic::const_iterator begin,
+                                            vec_basic::const_iterator end,
+                                            const std::string &func_name);
 };
 
 class C89CodePrinter : public BaseVisitor<C89CodePrinter, CodePrinter>
