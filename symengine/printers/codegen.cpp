@@ -55,6 +55,22 @@ std::string CodePrinter::print_math_function(const std::string &name) const
     return name;
 }
 
+std::string CodePrinter::print_binary_reduction(const vec_basic &args,
+                                                const std::string &func_name)
+{
+    if (args.size() < 2) {
+        throw SymEngineException("Impossible");
+    }
+
+    std::string result = apply(args.back());
+    for (auto it = args.rbegin() + 1; it != args.rend(); ++it) {
+        std::ostringstream s;
+        s << func_name << "(" << apply(*it) << ", " << result << ")";
+        result = s.str();
+    }
+    return result;
+}
+
 void CodePrinter::bvisit(const Basic &x)
 {
     throw SymEngineException("Not supported");
@@ -239,47 +255,11 @@ void CodePrinter::bvisit(const Truncate &x)
 }
 void CodePrinter::bvisit(const Max &x)
 {
-    std::ostringstream s;
-    const auto &args = x.get_args();
-    switch (args.size()) {
-        case 0:
-        case 1:
-            throw SymEngineException("Impossible");
-        case 2:
-            s << print_math_function("fmax") << "(" << apply(args[0]) << ", "
-              << apply(args[1]) << ")";
-            break;
-        default: {
-            vec_basic inner_args(args.begin() + 1, args.end());
-            auto inner = max(inner_args);
-            s << print_math_function("fmax") << "(" << apply(args[0]) << ", "
-              << apply(inner) << ")";
-            break;
-        }
-    }
-    str_ = s.str();
+    str_ = print_binary_reduction(x.get_args(), print_math_function("fmax"));
 }
 void CodePrinter::bvisit(const Min &x)
 {
-    std::ostringstream s;
-    const auto &args = x.get_args();
-    switch (args.size()) {
-        case 0:
-        case 1:
-            throw SymEngineException("Impossible");
-        case 2:
-            s << print_math_function("fmin") << "(" << apply(args[0]) << ", "
-              << apply(args[1]) << ")";
-            break;
-        default: {
-            vec_basic inner_args(args.begin() + 1, args.end());
-            auto inner = min(inner_args);
-            s << print_math_function("fmin") << "(" << apply(args[0]) << ", "
-              << apply(inner) << ")";
-            break;
-        }
-    }
-    str_ = s.str();
+    str_ = print_binary_reduction(x.get_args(), print_math_function("fmin"));
 }
 void CodePrinter::bvisit(const Constant &x)
 {
@@ -572,44 +552,12 @@ void MetalCodePrinter::bvisit(const Truncate &x)
 
 void MetalCodePrinter::bvisit(const Max &x)
 {
-    std::ostringstream s;
-    const auto &args = x.get_args();
-    switch (args.size()) {
-        case 0:
-        case 1:
-            throw SymEngineException("Impossible");
-        case 2:
-            s << "fmax(" << apply(args[0]) << ", " << apply(args[1]) << ")";
-            break;
-        default: {
-            vec_basic inner_args(args.begin() + 1, args.end());
-            auto inner = max(inner_args);
-            s << "fmax(" << apply(args[0]) << ", " << apply(inner) << ")";
-            break;
-        }
-    }
-    str_ = s.str();
+    str_ = print_binary_reduction(x.get_args(), "fmax");
 }
 
 void MetalCodePrinter::bvisit(const Min &x)
 {
-    std::ostringstream s;
-    const auto &args = x.get_args();
-    switch (args.size()) {
-        case 0:
-        case 1:
-            throw SymEngineException("Impossible");
-        case 2:
-            s << "fmin(" << apply(args[0]) << ", " << apply(args[1]) << ")";
-            break;
-        default: {
-            vec_basic inner_args(args.begin() + 1, args.end());
-            auto inner = min(inner_args);
-            s << "fmin(" << apply(args[0]) << ", " << apply(inner) << ")";
-            break;
-        }
-    }
-    str_ = s.str();
+    str_ = print_binary_reduction(x.get_args(), "fmin");
 }
 
 void MetalCodePrinter::bvisit(const Function &x)
