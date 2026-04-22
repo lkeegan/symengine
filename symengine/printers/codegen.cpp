@@ -35,6 +35,54 @@ normalize_code_printer_precision(CodePrinterPrecision precision)
     }
 }
 
+[[noreturn]] void throw_unsupported_function(const Function &x)
+{
+    throw SymEngineException("Function `" + x.__str__()
+                             + "` is not supported by this code printer");
+}
+
+const char *standard_math_function_name(const Function &x)
+{
+    switch (x.get_type_code()) {
+        case SYMENGINE_SIN:
+            return "sin";
+        case SYMENGINE_COS:
+            return "cos";
+        case SYMENGINE_TAN:
+            return "tan";
+        case SYMENGINE_ASIN:
+            return "asin";
+        case SYMENGINE_ACOS:
+            return "acos";
+        case SYMENGINE_ATAN:
+            return "atan";
+        case SYMENGINE_ATAN2:
+            return "atan2";
+        case SYMENGINE_SINH:
+            return "sinh";
+        case SYMENGINE_COSH:
+            return "cosh";
+        case SYMENGINE_TANH:
+            return "tanh";
+        case SYMENGINE_ASINH:
+            return "asinh";
+        case SYMENGINE_ACOSH:
+            return "acosh";
+        case SYMENGINE_ATANH:
+            return "atanh";
+        case SYMENGINE_LOG:
+            return "log";
+        case SYMENGINE_FLOOR:
+            return "floor";
+        case SYMENGINE_CEILING:
+            return "ceil";
+        case SYMENGINE_TRUNCATE:
+            return "trunc";
+        default:
+            return nullptr;
+    }
+}
+
 } // namespace
 
 CodePrinter::CodePrinter(CodePrinterPrecision precision)
@@ -53,6 +101,22 @@ std::string CodePrinter::print_math_function(const std::string &name) const
         return name + "f";
     }
     return name;
+}
+
+std::string CodePrinter::print_function_name(const Function &x) const
+{
+    if (const char *name = standard_math_function_name(x)) {
+        return print_math_function(name);
+    }
+
+    switch (x.get_type_code()) {
+        case SYMENGINE_ERF:
+            return print_math_function("erf");
+        case SYMENGINE_ERFC:
+            return print_math_function("erfc");
+        default:
+            throw_unsupported_function(x);
+    }
 }
 
 std::string CodePrinter::print_binary_reduction(const vec_basic &args,
@@ -252,18 +316,6 @@ void CodePrinter::bvisit(const Abs &x)
     s << print_math_function("fabs") << "(" << apply(x.get_arg()) << ")";
     str_ = s.str();
 }
-void CodePrinter::bvisit(const Ceiling &x)
-{
-    std::ostringstream s;
-    s << print_math_function("ceil") << "(" << apply(x.get_arg()) << ")";
-    str_ = s.str();
-}
-void CodePrinter::bvisit(const Truncate &x)
-{
-    std::ostringstream s;
-    s << print_math_function("trunc") << "(" << apply(x.get_arg()) << ")";
-    str_ = s.str();
-}
 void CodePrinter::bvisit(const Max &x)
 {
     str_ = print_binary_reduction(x.get_args(), print_math_function("fmax"));
@@ -352,9 +404,14 @@ void CodePrinter::bvisit(const GaloisField &x)
 
 void CodePrinter::bvisit(const Function &x)
 {
-    static const std::vector<std::string> names_ = init_str_printer_names();
+    const auto rewritten = rewrite_as_standard_math(x.rcp_from_this());
+    if (not eq(*rewritten, x)) {
+        str_ = apply(rewritten);
+        return;
+    }
+
     std::ostringstream o;
-    o << print_math_function(names_[x.get_type_code()]);
+    o << print_function_name(x);
     vec_basic vec = x.get_args();
     o << parenthesize(apply(vec));
     str_ = o.str();
@@ -407,6 +464,8 @@ void C89CodePrinter::_print_pow(std::ostringstream &o,
         o << print_math_function("exp") << "(" << apply(b) << ")";
     } else if (eq(*b, *rational(1, 2))) {
         o << print_math_function("sqrt") << "(" << apply(a) << ")";
+    } else if (eq(*b, *minus_one)) {
+        o << apply(one) << "/" << parenthesizeLT(a, PrecedenceEnum::Mul);
     } else {
         o << print_math_function("pow") << "(" << apply(a) << ", " << apply(b)
           << ")";
@@ -439,6 +498,8 @@ void C99CodePrinter::_print_pow(std::ostringstream &o,
         o << print_math_function("sqrt") << "(" << apply(a) << ")";
     } else if (eq(*b, *rational(1, 3))) {
         o << print_math_function("cbrt") << "(" << apply(a) << ")";
+    } else if (eq(*b, *minus_one)) {
+        o << apply(one) << "/" << parenthesizeLT(a, PrecedenceEnum::Mul);
     } else {
         o << print_math_function("pow") << "(" << apply(a) << ", " << apply(b)
           << ")";
@@ -540,27 +601,6 @@ void MetalCodePrinter::bvisit(const Infty &x)
     }
 }
 
-void MetalCodePrinter::bvisit(const Abs &x)
-{
-    std::ostringstream s;
-    s << "fabs(" << apply(x.get_arg()) << ")";
-    str_ = s.str();
-}
-
-void MetalCodePrinter::bvisit(const Ceiling &x)
-{
-    std::ostringstream s;
-    s << "ceil(" << apply(x.get_arg()) << ")";
-    str_ = s.str();
-}
-
-void MetalCodePrinter::bvisit(const Truncate &x)
-{
-    std::ostringstream s;
-    s << "trunc(" << apply(x.get_arg()) << ")";
-    str_ = s.str();
-}
-
 void MetalCodePrinter::bvisit(const Max &x)
 {
     str_ = print_binary_reduction(x.get_args(), "fmax");
@@ -571,14 +611,18 @@ void MetalCodePrinter::bvisit(const Min &x)
     str_ = print_binary_reduction(x.get_args(), "fmin");
 }
 
-void MetalCodePrinter::bvisit(const Function &x)
+std::string MetalCodePrinter::print_math_function(const std::string &name) const
 {
-    static const std::vector<std::string> names_ = init_str_printer_names();
-    std::ostringstream o;
-    o << names_[x.get_type_code()];
-    vec_basic vec = x.get_args();
-    o << parenthesize(apply(vec));
-    str_ = o.str();
+    return name;
+}
+
+std::string MetalCodePrinter::print_function_name(const Function &x) const
+{
+    if (const char *name = standard_math_function_name(x)) {
+        return print_math_function(name);
+    }
+
+    throw_unsupported_function(x);
 }
 
 void MetalCodePrinter::_print_pow(std::ostringstream &o,
@@ -589,6 +633,8 @@ void MetalCodePrinter::_print_pow(std::ostringstream &o,
         o << "exp(" << apply(b) << ")";
     } else if (eq(*b, *rational(1, 2))) {
         o << "sqrt(" << apply(a) << ")";
+    } else if (eq(*b, *minus_one)) {
+        o << apply(one) << "/" << parenthesizeLT(a, PrecedenceEnum::Mul);
     } else {
         o << "pow(" << apply(a) << ", " << apply(b) << ")";
     }
@@ -613,6 +659,8 @@ void JSCodePrinter::_print_pow(std::ostringstream &o, const RCP<const Basic> &a,
         o << "Math.sqrt(" << apply(a) << ")";
     } else if (eq(*b, *rational(1, 3))) {
         o << "Math.cbrt(" << apply(a) << ")";
+    } else if (eq(*b, *minus_one)) {
+        o << apply(one) << "/" << parenthesizeLT(a, PrecedenceEnum::Mul);
     } else {
         o << "Math.pow(" << apply(a) << ", " << apply(b) << ")";
     }
@@ -621,18 +669,6 @@ void JSCodePrinter::bvisit(const Abs &x)
 {
     std::ostringstream s;
     s << "Math.abs(" << apply(x.get_arg()) << ")";
-    str_ = s.str();
-}
-void JSCodePrinter::bvisit(const Sin &x)
-{
-    std::ostringstream s;
-    s << "Math.sin(" << apply(x.get_arg()) << ")";
-    str_ = s.str();
-}
-void JSCodePrinter::bvisit(const Cos &x)
-{
-    std::ostringstream s;
-    s << "Math.cos(" << apply(x.get_arg()) << ")";
     str_ = s.str();
 }
 void JSCodePrinter::bvisit(const Max &x)
@@ -656,6 +692,20 @@ void JSCodePrinter::bvisit(const Min &x)
         s << ((i == args.size() - 1) ? ")" : ", ");
     }
     str_ = s.str();
+}
+
+std::string JSCodePrinter::print_math_function(const std::string &name) const
+{
+    return "Math." + name;
+}
+
+std::string JSCodePrinter::print_function_name(const Function &x) const
+{
+    if (const char *name = standard_math_function_name(x)) {
+        return print_math_function(name);
+    }
+
+    throw_unsupported_function(x);
 }
 
 std::string ccode(const Basic &x, CodePrinterPrecision precision)

@@ -37,8 +37,6 @@ public:
     void bvisit(const Integers &x);
     void bvisit(const UniversalSet &x);
     void bvisit(const Abs &x);
-    void bvisit(const Ceiling &x);
-    void bvisit(const Truncate &x);
     void bvisit(const Max &x);
     void bvisit(const Min &x);
     void bvisit(const Constant &x);
@@ -62,7 +60,8 @@ public:
 protected:
     CodePrinterPrecision precision_;
     std::string print_scalar_literal(double d) const;
-    std::string print_math_function(const std::string &name) const;
+    virtual std::string print_math_function(const std::string &name) const;
+    virtual std::string print_function_name(const Function &x) const;
     std::string print_binary_reduction(const vec_basic &args,
                                        const std::string &func_name);
     std::string print_binary_reduction_impl(vec_basic::const_iterator begin,
@@ -123,12 +122,14 @@ public:
     void bvisit(const Constant &x);
     void bvisit(const NaN &x);
     void bvisit(const Infty &x);
-    void bvisit(const Abs &x);
-    void bvisit(const Ceiling &x);
-    void bvisit(const Truncate &x);
     void bvisit(const Max &x);
     void bvisit(const Min &x);
-    void bvisit(const Function &x);
+
+protected:
+    std::string print_math_function(const std::string &name) const override;
+    std::string print_function_name(const Function &x) const override;
+
+public:
     void _print_pow(std::ostringstream &o, const RCP<const Basic> &a,
                     const RCP<const Basic> &b) override;
 };
@@ -143,10 +144,12 @@ public:
     void _print_pow(std::ostringstream &o, const RCP<const Basic> &a,
                     const RCP<const Basic> &b) override;
     void bvisit(const Abs &x);
-    void bvisit(const Sin &x);
-    void bvisit(const Cos &x);
     void bvisit(const Max &x);
     void bvisit(const Min &x);
+
+protected:
+    std::string print_math_function(const std::string &name) const override;
+    std::string print_function_name(const Function &x) const override;
 };
 } // namespace SymEngine
 

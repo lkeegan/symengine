@@ -47,9 +47,14 @@ public:
         init(x, outputs, cse);
     }
 
-    void init(const vec_basic &inputs, const vec_basic &outputs,
+    void init(const vec_basic &inputs, const vec_basic &orig_outputs,
               bool cse = false)
     {
+        vec_basic outputs;
+        outputs.reserve(orig_outputs.size());
+        for (auto &p : orig_outputs) {
+            outputs.push_back(rewrite_as_standard_math(p));
+        }
         results.clear();
         cse_intermediate_fns.clear();
         symbols = inputs;
@@ -214,24 +219,6 @@ public:
         result_ = [=](const T *x) { return std::log(tmp(x)); };
     };
 
-    void bvisit(const Cot &x)
-    {
-        fn tmp = apply(*(x.get_arg()));
-        result_ = [=](const T *x) { return 1.0 / std::tan(tmp(x)); };
-    };
-
-    void bvisit(const Csc &x)
-    {
-        fn tmp = apply(*(x.get_arg()));
-        result_ = [=](const T *x) { return 1.0 / std::sin(tmp(x)); };
-    };
-
-    void bvisit(const Sec &x)
-    {
-        fn tmp = apply(*(x.get_arg()));
-        result_ = [=](const T *x) { return 1.0 / std::cos(tmp(x)); };
-    };
-
     void bvisit(const ASin &x)
     {
         fn tmp = apply(*(x.get_arg()));
@@ -244,28 +231,10 @@ public:
         result_ = [=](const T *x) { return std::acos(tmp(x)); };
     };
 
-    void bvisit(const ASec &x)
-    {
-        fn tmp = apply(*(x.get_arg()));
-        result_ = [=](const T *x) { return std::acos(1.0 / tmp(x)); };
-    };
-
-    void bvisit(const ACsc &x)
-    {
-        fn tmp = apply(*(x.get_arg()));
-        result_ = [=](const T *x) { return std::asin(1.0 / tmp(x)); };
-    };
-
     void bvisit(const ATan &x)
     {
         fn tmp = apply(*(x.get_arg()));
         result_ = [=](const T *x) { return std::atan(tmp(x)); };
-    };
-
-    void bvisit(const ACot &x)
-    {
-        fn tmp = apply(*(x.get_arg()));
-        result_ = [=](const T *x) { return std::atan(1.0 / tmp(x)); };
     };
 
     void bvisit(const Sinh &x)
@@ -274,22 +243,10 @@ public:
         result_ = [=](const T *x) { return std::sinh(tmp(x)); };
     };
 
-    void bvisit(const Csch &x)
-    {
-        fn tmp = apply(*(x.get_arg()));
-        result_ = [=](const T *x) { return 1.0 / std::sinh(tmp(x)); };
-    };
-
     void bvisit(const Cosh &x)
     {
         fn tmp = apply(*(x.get_arg()));
         result_ = [=](const T *x) { return std::cosh(tmp(x)); };
-    };
-
-    void bvisit(const Sech &x)
-    {
-        fn tmp = apply(*(x.get_arg()));
-        result_ = [=](const T *x) { return 1.0 / std::cosh(tmp(x)); };
     };
 
     void bvisit(const Tanh &x)
@@ -298,22 +255,10 @@ public:
         result_ = [=](const T *x) { return std::tanh(tmp(x)); };
     };
 
-    void bvisit(const Coth &x)
-    {
-        fn tmp = apply(*(x.get_arg()));
-        result_ = [=](const T *x) { return 1.0 / std::tanh(tmp(x)); };
-    };
-
     void bvisit(const ASinh &x)
     {
         fn tmp = apply(*(x.get_arg()));
         result_ = [=](const T *x) { return std::asinh(tmp(x)); };
-    };
-
-    void bvisit(const ACsch &x)
-    {
-        fn tmp = apply(*(x.get_arg()));
-        result_ = [=](const T *x) { return std::asinh(1.0 / tmp(x)); };
     };
 
     void bvisit(const ACosh &x)
@@ -326,18 +271,6 @@ public:
     {
         fn tmp = apply(*(x.get_arg()));
         result_ = [=](const T *x) { return std::atanh(tmp(x)); };
-    };
-
-    void bvisit(const ACoth &x)
-    {
-        fn tmp = apply(*(x.get_arg()));
-        result_ = [=](const T *x) { return std::atanh(1.0 / tmp(x)); };
-    };
-
-    void bvisit(const ASech &x)
-    {
-        fn tmp = apply(*(x.get_arg()));
-        result_ = [=](const T *x) { return std::acosh(1.0 / tmp(x)); };
     };
 
     void bvisit(const Constant &x)

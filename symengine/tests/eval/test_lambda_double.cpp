@@ -358,8 +358,10 @@ TEST_CASE("Check llvm and lambda are equal", "[llvm_double]")
     b = add(y, z);
 
     vec_basic exprs = {
-        log(a),   abs(a),      tan(a),      sinh(a),     cosh(a),    tanh(a),
-        asinh(b), acosh(b),    atanh(a),    asin(a),     acos(a),    atan(a),
+        log(a),   abs(a),      tan(a),      cot(a),      csc(b),     sec(b),
+        sinh(a),  cosh(a),     tanh(a),     csch(b),     sech(b),    coth(b),
+        asinh(b), acosh(b),    atanh(a),    acsch(b),    acoth(b),   asech(a),
+        asin(a),  acos(a),     atan(a),     asec(b),     acsc(b),    acot(b),
         gamma(a), loggamma(a), erf(a),      erfc(a),     floor(a),   ceiling(a),
         sign(a),  max({a, b}), min({a, b}), atan2(a, b), truncate(a)};
 

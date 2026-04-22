@@ -122,9 +122,15 @@ llvm::Function *LLVMVisitor::get_function_type(llvm::LLVMContext *context)
     return F;
 }
 
-void LLVMVisitor::init(const vec_basic &inputs, const vec_basic &outputs,
+void LLVMVisitor::init(const vec_basic &inputs,
+                       const vec_basic &orig_outputs,
                        const bool symbolic_cse, unsigned opt_level)
 {
+    vec_basic outputs;
+    outputs.reserve(orig_outputs.size());
+    for (auto &p : orig_outputs) {
+        outputs.push_back(rewrite_as_standard_math(p));
+    }
     executionengine.reset();
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();

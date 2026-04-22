@@ -105,24 +105,6 @@ public:
         result_ = std::log(tmp);
     };
 
-    void bvisit(const Cot &x)
-    {
-        T tmp = apply(*(x.get_arg()));
-        result_ = 1.0 / std::tan(tmp);
-    };
-
-    void bvisit(const Csc &x)
-    {
-        T tmp = apply(*(x.get_arg()));
-        result_ = 1.0 / std::sin(tmp);
-    };
-
-    void bvisit(const Sec &x)
-    {
-        T tmp = apply(*(x.get_arg()));
-        result_ = 1.0 / std::cos(tmp);
-    };
-
     void bvisit(const ASin &x)
     {
         T tmp = apply(*(x.get_arg()));
@@ -135,28 +117,10 @@ public:
         result_ = std::acos(tmp);
     };
 
-    void bvisit(const ASec &x)
-    {
-        T tmp = apply(*(x.get_arg()));
-        result_ = std::acos(1.0 / tmp);
-    };
-
-    void bvisit(const ACsc &x)
-    {
-        T tmp = apply(*(x.get_arg()));
-        result_ = std::asin(1.0 / tmp);
-    };
-
     void bvisit(const ATan &x)
     {
         T tmp = apply(*(x.get_arg()));
         result_ = std::atan(tmp);
-    };
-
-    void bvisit(const ACot &x)
-    {
-        T tmp = apply(*(x.get_arg()));
-        result_ = std::atan(1.0 / tmp);
     };
 
     void bvisit(const Sinh &x)
@@ -165,22 +129,10 @@ public:
         result_ = std::sinh(tmp);
     };
 
-    void bvisit(const Csch &x)
-    {
-        T tmp = apply(*(x.get_arg()));
-        result_ = 1.0 / std::sinh(tmp);
-    };
-
     void bvisit(const Cosh &x)
     {
         T tmp = apply(*(x.get_arg()));
         result_ = std::cosh(tmp);
-    };
-
-    void bvisit(const Sech &x)
-    {
-        T tmp = apply(*(x.get_arg()));
-        result_ = 1.0 / std::cosh(tmp);
     };
 
     void bvisit(const Tanh &x)
@@ -189,22 +141,10 @@ public:
         result_ = std::tanh(tmp);
     };
 
-    void bvisit(const Coth &x)
-    {
-        T tmp = apply(*(x.get_arg()));
-        result_ = 1.0 / std::tanh(tmp);
-    };
-
     void bvisit(const ASinh &x)
     {
         T tmp = apply(*(x.get_arg()));
         result_ = std::asinh(tmp);
-    };
-
-    void bvisit(const ACsch &x)
-    {
-        T tmp = apply(*(x.get_arg()));
-        result_ = std::asinh(1.0 / tmp);
     };
 
     void bvisit(const ACosh &x)
@@ -217,18 +157,6 @@ public:
     {
         T tmp = apply(*(x.get_arg()));
         result_ = std::atanh(tmp);
-    };
-
-    void bvisit(const ACoth &x)
-    {
-        T tmp = apply(*(x.get_arg()));
-        result_ = std::atanh(1.0 / tmp);
-    };
-
-    void bvisit(const ASech &x)
-    {
-        T tmp = apply(*(x.get_arg()));
-        result_ = std::acosh(1.0 / tmp);
     };
 
     void bvisit(const Constant &x)
@@ -725,13 +653,13 @@ static inline std::vector<fn> init_eval_double()
 double eval_double(const Basic &b)
 {
     EvalRealDoubleVisitorFinal v;
-    return v.apply(b);
+    return v.apply(*rewrite_as_standard_math(b.rcp_from_this()));
 }
 
 std::complex<double> eval_complex_double(const Basic &b)
 {
     EvalComplexDoubleVisitor v;
-    return v.apply(b);
+    return v.apply(*rewrite_as_standard_math(b.rcp_from_this()));
 }
 
 double eval_double_single_dispatch(const Basic &b)
@@ -743,7 +671,7 @@ double eval_double_single_dispatch(const Basic &b)
 double eval_double_visitor_pattern(const Basic &b)
 {
     EvalRealDoubleVisitorPattern v;
-    return v.apply(b);
+    return v.apply(*rewrite_as_standard_math(b.rcp_from_this()));
 }
 
 #define ACCEPT(CLASS)                                                          \
