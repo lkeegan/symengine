@@ -152,6 +152,7 @@ TEST_CASE("precision: eval_mpfr", "[eval_mpfr]")
     RCP<const Basic> arg1 = integer(2);
     RCP<const Basic> arg2 = div(one, integer(4));
     RCP<const Basic> arg3 = div(minus_one, integer(4));
+    RCP<const Basic> arg4 = integer(3);
 
     std::vector<std::tuple<RCP<const Basic>, double, double>> testvec = {
         std::make_tuple(pow(E, integer(2)), 7.3890560989306, 7.38905609893066),
@@ -184,6 +185,10 @@ TEST_CASE("precision: eval_mpfr", "[eval_mpfr]")
         std::make_tuple(atan(arg1), 1.1071487177940, 1.1071487177941),
         std::make_tuple(acsc(arg1), 0.52359877559829, 0.5235987755983),
         std::make_tuple(asec(arg1), 1.04719755119659, 1.04719755119660),
+        // arg1 simplifies to exact pi fractions; arg4 exercises the
+        // EvalMPFRVisitor ASec/ACsc handlers directly.
+        std::make_tuple(acsc(arg4), 0.339836909454121, 0.339836909454122),
+        std::make_tuple(asec(arg4), 1.230959417340774, 1.230959417340775),
         std::make_tuple(acot(arg1), 0.4636476090008, 0.46364760900081),
         std::make_tuple(sinh(arg1), 3.6268604078470, 3.6268604078471),
         std::make_tuple(cosh(arg2), 1.0314130998795, 1.0314130998796),
@@ -216,7 +221,7 @@ TEST_CASE("precision: eval_mpfr", "[eval_mpfr]")
         std::make_tuple(beta(add(arg1, arg2), arg1), 0.13675213675213,
                         0.13675213675214),
         std::make_tuple(abs((neg(sqrt(add(arg2, arg2))))), 0.70710678118654,
-                        0.70710678118655)
+                        0.70710678118655),
     };
 
     for (unsigned i = 0; i < testvec.size(); i++) {
