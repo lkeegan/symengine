@@ -137,6 +137,38 @@ void test_cwrapper()
     SYMENGINE_C_ASSERT(strcmp(s, "expf(sqrtf(123.0f))") == 0);
     basic_str_free(s);
 
+    s = basic_str_metalcode_settings(e, NULL);
+    SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123.0f))") == 0);
+    basic_str_free(s);
+
+    s = basic_str_metalcode(e);
+    SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123.0f))") == 0);
+    basic_str_free(s);
+
+    s = basic_str_metalcode_settings(e, float_settings);
+    SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123.0f))") == 0);
+    basic_str_free(s);
+
+    BasicCodePrinterSettings *half_settings = basic_code_printer_settings_new();
+    basic_code_printer_settings_set_precision(half_settings, SYMENGINE_HALF);
+
+    s = basic_str_ccode_settings(e, half_settings);
+    SYMENGINE_C_ASSERT(s == NULL);
+
+    s = basic_str_cudacode_settings(e, half_settings);
+    SYMENGINE_C_ASSERT(s == NULL);
+
+    s = basic_str_metalcode_settings(e, half_settings);
+    SYMENGINE_C_ASSERT(strcmp(s, "exp(sqrt(123.0h))") == 0);
+    basic_str_free(s);
+
+    BasicCodePrinterSettings *double_settings
+        = basic_code_printer_settings_new();
+    basic_code_printer_settings_set_precision(double_settings,
+                                              SYMENGINE_DOUBLE);
+    s = basic_str_metalcode_settings(e, double_settings);
+    SYMENGINE_C_ASSERT(s == NULL);
+
 #if HAVE_SYMENGINE_RTTI
     unsigned long size = 0;
     basic deserialized;
@@ -229,6 +261,8 @@ void test_cwrapper()
     basic_free_stack(numer);
     basic_free_stack(denom);
     basic_str_free(s);
+    basic_code_printer_settings_free(double_settings);
+    basic_code_printer_settings_free(half_settings);
     basic_code_printer_settings_free(float_settings);
 }
 

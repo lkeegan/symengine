@@ -52,6 +52,8 @@ using SymEngine::logical_not;
 using SymEngine::logical_xor;
 using SymEngine::Lt;
 using SymEngine::max;
+using SymEngine::metalcode;
+using SymEngine::MetalCodePrinter;
 using SymEngine::min;
 using SymEngine::Nan;
 using SymEngine::Ne;
@@ -109,6 +111,73 @@ TEST_CASE("CUDA-code printers", "[CudaCodePrinter]")
     REQUIRE(cuda_float.apply(Nan) == "CUDART_NAN_F");
 }
 
+TEST_CASE("Metal-code printers", "[MetalCodePrinter]")
+{
+    MetalCodePrinter metal;
+    MetalCodePrinter metal_half(CodePrinterPrecision::Half);
+
+    REQUIRE(metal.apply(Inf) == "INFINITY");
+    REQUIRE(metal.apply(E) == "exp(1.0f)");
+    REQUIRE(metal.apply(pi) == "acos(-1.0f)");
+    REQUIRE(metal.apply(Nan) == "NAN");
+    REQUIRE(metal_half.apply(Inf) == "HUGE_VALH");
+    REQUIRE(metal_half.apply(E) == "exp(1.0h)");
+    REQUIRE(metal_half.apply(pi) == "acos(-1.0h)");
+    REQUIRE(metal_half.apply(Nan) == "half(NAN)");
+    REQUIRE_THROWS_AS(MetalCodePrinter(CodePrinterPrecision::Double),
+                      SymEngine::SymEngineException);
+}
+
+TEST_CASE("Metal code generation", "[metalcode]")
+{
+    auto x = symbol("x");
+    auto y = symbol("y");
+    auto z = symbol("z");
+    auto a = symbol("a");
+    auto b = symbol("b");
+    auto c = symbol("c");
+    auto piecewise_expr = piecewise(
+        {{x, contains(x, interval(NegInf, integer(2), true, false))},
+         {y, contains(x, interval(integer(2), integer(5), true, false))},
+         {add(x, y), boolTrue}});
+
+    REQUIRE(metalcode(*boolTrue) == "1.0f");
+    REQUIRE(metalcode(*add(add(add(add(x, mul(x, y)), mul(x, x)), pow(x, y)),
+                           sqrt(integer(2))))
+            == "x + x*y + sqrt(2.0f) + pow(x, 2.0f) + pow(x, y)");
+    REQUIRE(metalcode(*rational(1, 3)) == "1.0f/3.0f");
+    REQUIRE(metalcode(*boolTrue, CodePrinterPrecision::Half) == "1.0h");
+    REQUIRE(metalcode(*add(add(add(add(x, mul(x, y)), mul(x, x)), pow(x, y)),
+                           sqrt(integer(2))),
+                      CodePrinterPrecision::Half)
+            == "x + x*y + sqrt(2.0h) + pow(x, 2.0h) + pow(x, y)");
+    REQUIRE(metalcode(*rational(1, 3), CodePrinterPrecision::Half)
+            == "1.0h/3.0h");
+    REQUIRE(metalcode(*function_symbol("f", pow(integer(2), x)))
+            == "f(pow(2.0f, x))");
+    REQUIRE(metalcode(*function_symbol("f", pow(integer(2), x)),
+                      CodePrinterPrecision::Half)
+            == "f(pow(2.0h, x))");
+    REQUIRE(metalcode(*abs(x)) == "fabs(x)");
+    REQUIRE(metalcode(*sin(x)) == "sin(x)");
+    REQUIRE(metalcode(*atan2(x, y)) == "atan2(x, y)");
+    REQUIRE(metalcode(*max({x, y, z})) == "fmax(x, fmax(y, z))");
+    REQUIRE(metalcode(*min({x, y, z})) == "fmin(x, fmin(y, z))");
+    REQUIRE(metalcode(*max({a, b, c, x, y, z}))
+            == "fmax(fmax(a, fmax(b, c)), fmax(x, fmax(y, z)))");
+    REQUIRE(metalcode(*min({a, b, c, x, y, z}))
+            == "fmin(fmin(a, fmin(b, c)), fmin(x, fmin(y, z)))");
+    REQUIRE(metalcode(*piecewise_expr)
+            == "((x <= 2.0f) ? (\n   x\n)\n: ((x > 2.0f && x <= 5.0f) ? (\n   "
+               "y\n)\n: (\n   x + y\n)))");
+    REQUIRE_THROWS_AS(metalcode(*x, CodePrinterPrecision::Double),
+                      SymEngine::SymEngineException);
+    REQUIRE_THROWS_AS(ccode(*x, CodePrinterPrecision::Half),
+                      SymEngine::SymEngineException);
+    REQUIRE_THROWS_AS(cudacode(*x, CodePrinterPrecision::Half),
+                      SymEngine::SymEngineException);
+}
+
 TEST_CASE("Codegen boolean support", "[ccode][cudacode]")
 {
     auto x = symbol("x");
@@ -161,6 +230,9 @@ TEST_CASE("Dummy", "[CodePrinter]")
 }
 TEST_CASE("Arithmetic", "[ccode][cudacode]")
 {
+    auto a = symbol("a");
+    auto b = symbol("b");
+    auto c = symbol("c");
     auto x = symbol("x");
     auto y = symbol("y");
     auto p = add(add(add(add(x, mul(x, y)), pow(x, y)), mul(x, x)),
@@ -190,6 +262,9 @@ TEST_CASE("Rational", "[ccode][cudacode]")
 
 TEST_CASE("Functions", "[ccode][cudacode]")
 {
+    auto a = symbol("a");
+    auto b = symbol("b");
+    auto c = symbol("c");
     auto x = symbol("x");
     auto y = symbol("y");
     auto z = symbol("z");
@@ -312,12 +387,26 @@ TEST_CASE("Functions", "[ccode][cudacode]")
     REQUIRE(cudacode(*p) == "fmax(x, fmax(y, z))");
     REQUIRE(cudacode(*p, CodePrinterPrecision::Float)
             == "fmaxf(x, fmaxf(y, z))");
+    p = max({a, b, c, x, y, z});
+    REQUIRE(ccode(*p) == "fmax(fmax(a, fmax(b, c)), fmax(x, fmax(y, z)))");
+    REQUIRE(ccode(*p, CodePrinterPrecision::Float)
+            == "fmaxf(fmaxf(a, fmaxf(b, c)), fmaxf(x, fmaxf(y, z)))");
+    REQUIRE(cudacode(*p) == "fmax(fmax(a, fmax(b, c)), fmax(x, fmax(y, z)))");
+    REQUIRE(cudacode(*p, CodePrinterPrecision::Float)
+            == "fmaxf(fmaxf(a, fmaxf(b, c)), fmaxf(x, fmaxf(y, z)))");
     p = min({x, y, z});
     REQUIRE(ccode(*p) == "fmin(x, fmin(y, z))");
     REQUIRE(ccode(*p, CodePrinterPrecision::Float) == "fminf(x, fminf(y, z))");
     REQUIRE(cudacode(*p) == "fmin(x, fmin(y, z))");
     REQUIRE(cudacode(*p, CodePrinterPrecision::Float)
             == "fminf(x, fminf(y, z))");
+    p = min({a, b, c, x, y, z});
+    REQUIRE(ccode(*p) == "fmin(fmin(a, fmin(b, c)), fmin(x, fmin(y, z)))");
+    REQUIRE(ccode(*p, CodePrinterPrecision::Float)
+            == "fminf(fminf(a, fminf(b, c)), fminf(x, fminf(y, z)))");
+    REQUIRE(cudacode(*p) == "fmin(fmin(a, fmin(b, c)), fmin(x, fmin(y, z)))");
+    REQUIRE(cudacode(*p, CodePrinterPrecision::Float)
+            == "fminf(fminf(a, fminf(b, c)), fminf(x, fminf(y, z)))");
 }
 
 TEST_CASE("Configurable precision", "[ccode][cudacode]")
