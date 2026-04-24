@@ -307,7 +307,7 @@ jobs:
       if: matrix.MSYS_ENV == ''
       run: echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
 
-    - uses: conda-incubator/setup-miniconda@v3
+    - uses: conda-incubator/setup-miniconda@v4
       if: matrix.MSYS_ENV == ''
       with:
         activate-environment: symengine
@@ -342,7 +342,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: conda-incubator/setup-miniconda@v3
+      - uses: conda-incubator/setup-miniconda@v4
         with:
           channels: conda-forge
           environment-file: symengine/utilities/matchpycpp/environment.yml
