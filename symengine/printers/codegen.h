@@ -9,6 +9,9 @@
 namespace SymEngine
 {
 
+RCP<const Basic> lower_codegen_expr(const RCP<const Basic> &x);
+RCP<const Basic> lower_codegen_expr(const Basic &x);
+
 class CodePrinter : public BaseVisitor<CodePrinter, StrPrinter>
 {
 public:

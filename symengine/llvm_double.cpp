@@ -35,7 +35,7 @@
 #include <fstream>
 
 #include <symengine/llvm_double.h>
-#include <symengine/codegen_lowering.h>
+#include <symengine/printers/codegen.h>
 #include <symengine/eval_double.h>
 #include <symengine/eval.h>
 
