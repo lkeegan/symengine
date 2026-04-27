@@ -51,6 +51,7 @@ using SymEngine::Eq;
 using SymEngine::evalf;
 using SymEngine::floor;
 using SymEngine::gamma;
+using SymEngine::Gt;
 using SymEngine::Inf;
 using SymEngine::integer;
 using SymEngine::LambdaComplexDoubleVisitor;
@@ -59,6 +60,7 @@ using SymEngine::Le;
 using SymEngine::log;
 using SymEngine::loggamma;
 using SymEngine::logical_and;
+using SymEngine::logical_not;
 using SymEngine::logical_xor;
 using SymEngine::Lt;
 using SymEngine::map_basic_basic;
@@ -192,6 +194,30 @@ TEST_CASE("Evaluate logical xor with llvm visitors", "[llvm_double]")
                                  static_cast<float>(test_case.y)})
                 == Approx(test_case.expected));
     }
+}
+
+TEST_CASE("Evaluate logical not with llvm visitors", "[llvm_double]")
+{
+    auto x = symbol("x");
+    auto expr
+        = logical_not(logical_xor({Gt(x, integer(2)), Lt(x, integer(4))}));
+
+    LambdaRealDoubleVisitor lambda;
+    lambda.init({x}, *expr);
+
+    LLVMDoubleVisitor llvm_double;
+    llvm_double.init({x}, *expr);
+
+    LLVMFloatVisitor llvm_float;
+    llvm_float.init({x}, *expr);
+
+    REQUIRE(lambda.call({1.0}) == Approx(0.0));
+    REQUIRE(llvm_double.call({1.0}) == Approx(0.0));
+    REQUIRE(llvm_float.call({1.0f}) == Approx(0.0));
+
+    REQUIRE(lambda.call({3.0}) == Approx(1.0));
+    REQUIRE(llvm_double.call({3.0}) == Approx(1.0));
+    REQUIRE(llvm_float.call({3.0f}) == Approx(1.0));
 }
 #endif
 
