@@ -26,12 +26,22 @@ namespace SymEngine
 {
 
 template <class Archive>
-class RCPBasicAwareOutputArchive : public Archive
+class RCPBasicAwareOutputArchiveInterface
+{
+public:
+    virtual ~RCPBasicAwareOutputArchiveInterface() = default;
+    virtual void save_rcp_basic(const RCP<const Basic> &ptr) = 0;
+};
+
+template <class Archive, class Tag = void>
+class RCPBasicAwareOutputArchive
+    : public Archive,
+      public RCPBasicAwareOutputArchiveInterface<Archive>
 {
     using Archive::Archive;
 
 public:
-    void save_rcp_basic(const RCP<const Basic> &ptr)
+    void save_rcp_basic(const RCP<const Basic> &ptr) override
     {
         uintptr_t addr = (uintptr_t)(void *)ptr.get();
         (*this)(addr);
@@ -65,13 +75,22 @@ private:
 };
 
 template <class Archive>
-class RCPBasicAwareInputArchive : public Archive
+class RCPBasicAwareInputArchiveInterface
+{
+public:
+    virtual ~RCPBasicAwareInputArchiveInterface() = default;
+    virtual RCP<const Basic> load_rcp_basic() = 0;
+};
+
+template <class Archive, class Tag = void>
+class RCPBasicAwareInputArchive
+    : public Archive,
+      public RCPBasicAwareInputArchiveInterface<Archive>
 {
     using Archive::Archive;
 
 public:
-    template <class T>
-    RCP<const T> load_rcp_basic()
+    RCP<const Basic> load_rcp_basic() override
     {
         try {
             uintptr_t addr;
@@ -89,21 +108,7 @@ public:
                 if (it == _rcp_map.end()) {
                     throw SerializationError("Invalid shared pointer");
                 }
-                RCP<const Basic> b = it->second;
-                switch (b->get_type_code()) {
-#define SYMENGINE_ENUM(type_enum, Class)                                       \
-    case type_enum: {                                                          \
-        if (not std::is_base_of<T, Class>::value) {                            \
-            throw SerializationError("Cannot convert to given type");          \
-        } else {                                                               \
-            return rcp_static_cast<const T>(b);                                \
-        }                                                                      \
-    }
-#include "symengine/type_codes.inc"
-#undef SYMENGINE_ENUM
-                    default:
-                        throw SerializationError("Unknown typeID");
-                }
+                return it->second;
             }
 
             TypeID type_code;
@@ -114,11 +119,7 @@ public:
         RCP<const Class> dummy_ptr;                                            \
         RCP<const Basic> basic_ptr = load_basic(*this, dummy_ptr);             \
         _rcp_map[addr] = basic_ptr;                                            \
-        if (not std::is_base_of<T, Class>::value) {                            \
-            throw SerializationError("Cannot convert to given type");          \
-        } else {                                                               \
-            return rcp_static_cast<const T>(basic_ptr);                        \
-        }                                                                      \
+        return basic_ptr;                                                      \
     }
 #include "symengine/type_codes.inc"
 #undef SYMENGINE_ENUM
@@ -400,8 +401,8 @@ inline void save_basic(Archive &ar, const FunctionWrapper &b)
 template <class Archive, class T>
 inline void CEREAL_SAVE_FUNCTION_NAME(Archive &ar, RCP<const T> const &ptr)
 {
-    RCPBasicAwareOutputArchive<Archive> *ar_ptr
-        = dynamic_cast<RCPBasicAwareOutputArchive<Archive> *>(&ar);
+    RCPBasicAwareOutputArchiveInterface<Archive> *ar_ptr
+        = dynamic_cast<RCPBasicAwareOutputArchiveInterface<Archive> *>(&ar);
     if (not ar_ptr) {
         throw SerializationError("Need a RCPBasicAwareOutputArchive");
     }
@@ -801,12 +802,18 @@ inline void load_typeid(Archive &ar, TypeID &t)
 template <class Archive, class T>
 inline void CEREAL_LOAD_FUNCTION_NAME(Archive &ar, RCP<const T> &ptr)
 {
-    RCPBasicAwareInputArchive<Archive> *ar_ptr
-        = dynamic_cast<RCPBasicAwareInputArchive<Archive> *>(&ar);
+    RCPBasicAwareInputArchiveInterface<Archive> *ar_ptr
+        = dynamic_cast<RCPBasicAwareInputArchiveInterface<Archive> *>(&ar);
     if (not ar_ptr) {
         throw SerializationError("Need a RCPBasicAwareInputArchive");
     }
-    ptr = ar_ptr->template load_rcp_basic<T>();
+    RCP<const Basic> basic_ptr = ar_ptr->load_rcp_basic();
+    // Note: don't rely on rcp_dynamic_cast to report a bad cast, since it
+    // throws with the SymEngine RCP backend but returns null with Teuchos.
+    if (not is_a_sub<T>(*basic_ptr)) {
+        throw SerializationError("Cannot convert to given type");
+    }
+    ptr = rcp_static_cast<const T>(basic_ptr);
 }
 } // namespace SymEngine
 #endif // SYMENGINE_SERIALIZE_CEREAL_H

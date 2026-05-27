@@ -27,6 +27,36 @@ using SymEngine::RealMPFR;
 
 namespace se = SymEngine;
 
+struct TaggedSymbolArchive {
+};
+
+using TaggedOutputArchive
+    = se::RCPBasicAwareOutputArchive<cereal::PortableBinaryOutputArchive,
+                                     TaggedSymbolArchive>;
+using TaggedInputArchive
+    = se::RCPBasicAwareInputArchive<cereal::PortableBinaryInputArchive,
+                                    TaggedSymbolArchive>;
+
+namespace SymEngine
+{
+void save_basic(TaggedOutputArchive &ar, const Symbol &b)
+{
+    uint8_t marker = 42;
+    ar(marker, b.__str__());
+}
+
+RCP<const Basic> load_basic(TaggedInputArchive &ar, RCP<const Symbol> &)
+{
+    uint8_t marker;
+    std::string name;
+    ar(marker, name);
+    if (marker != 42) {
+        throw SerializationError("Invalid tagged Symbol marker");
+    }
+    return symbol(name);
+}
+} // namespace SymEngine
+
 template <typename T>
 string dumps(RCP<const T> obj)
 {
@@ -41,6 +71,23 @@ RCP<const T> loads(string sobj)
     RCP<const T> obj;
     std::istringstream iss(sobj);
     RCPBasicAwareInputArchive<cereal::BinaryInputArchive>{iss}(obj);
+    return obj;
+}
+
+template <typename T>
+string tagged_dumps(RCP<const T> obj)
+{
+    std::ostringstream oss;
+    TaggedOutputArchive{oss}(obj);
+    return oss.str();
+}
+
+template <typename T>
+RCP<const T> tagged_loads(string sobj)
+{
+    RCP<const T> obj;
+    std::istringstream iss(sobj);
+    TaggedInputArchive{iss}(obj);
     return obj;
 }
 
@@ -114,6 +161,27 @@ TEST_CASE("Test serialization exception", "[serialize-cereal]")
         } catch (se::SerializationError &e) {
         }
     }
+}
+
+TEST_CASE("Test serialization type mismatch", "[serialize-cereal]")
+{
+    // Serializing a Symbol then loading it as an incompatible type should
+    // raise a SerializationError on every RCP backend.
+    string s_symb_x = dumps<Symbol>(se::symbol("x"));
+    REQUIRE_THROWS_AS(loads<Integer>(s_symb_x), se::SerializationError);
+    // Loading into a compatible (base) type must still succeed.
+    REQUIRE_NOTHROW(loads<Basic>(s_symb_x));
+}
+
+TEST_CASE("Test separate tagged serialization archive", "[serialize-cereal]")
+{
+    RCP<const Basic> b = se::symbol("x");
+    RCP<const Basic> expr = add(sin(b), cos(b));
+
+    RCP<const Basic> new_expr = tagged_loads<Basic>(tagged_dumps(expr));
+    REQUIRE(eq(*expr, *new_expr));
+    REQUIRE(new_expr->get_args()[0]->get_args()[0].get()
+            == new_expr->get_args()[1]->get_args()[0].get());
 }
 
 TEST_CASE("Test serialization shared pointer", "[serialize-cereal]")
