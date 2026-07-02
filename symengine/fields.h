@@ -604,6 +604,7 @@ public:
     }
 
     vec_basic get_args() const override;
+    RCP<const Basic> as_symbolic() const;
     inline const std::vector<integer_class> &get_dict() const
     {
         return get_poly().dict_;

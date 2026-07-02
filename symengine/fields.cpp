@@ -109,6 +109,11 @@ vec_basic GaloisField::get_args() const
     return args;
 }
 
+RCP<const Basic> GaloisField::as_symbolic() const
+{
+    return SymEngine::add(get_args());
+}
+
 GaloisFieldDict::GaloisFieldDict(const int &i, const integer_class &mod)
     : modulo_(mod)
 {

@@ -507,16 +507,16 @@ public:
 
     RCP<const Basic> as_symbolic() const
     {
-        const auto &self = down_cast<const Poly &>(*this);
+        auto it = (down_cast<const Poly &>(*this)).begin();
+        auto end = (down_cast<const Poly &>(*this)).end();
+
         vec_basic args;
-        auto deg = self.get_degree();
-        for (int i = 0; i <= deg; ++i) {
-            integer_class m = self.get_coeff(i);
-            if (m == 0)
-                continue;
-            if (i == 0) {
+        for (; it != end; ++it) {
+            integer_class m = it->second;
+
+            if (it->first == 0) {
                 args.push_back(integer(m));
-            } else if (i == 1) {
+            } else if (it->first == 1) {
                 if (m == 1) {
                     args.push_back(this->get_var());
                 } else {
@@ -525,10 +525,10 @@ public:
                 }
             } else {
                 if (m == 1) {
-                    args.push_back(pow(this->get_var(), integer(i)));
+                    args.push_back(pow(this->get_var(), integer(it->first)));
                 } else {
                     args.push_back(Mul::from_dict(
-                        integer(m), {{this->get_var(), integer(i)}}));
+                        integer(m), {{this->get_var(), integer(it->first)}}));
                 }
             }
         }
